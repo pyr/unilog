@@ -39,13 +39,13 @@
       (when console
         (.addAppender root-logger (ConsoleAppender. (layout json))))
 
-      (doseq [file files
-              :let [path (if (string? file) file (:file file))
-                    json (if (string? file) false (:json file))]]
-        (let [rolling-policy (doto (TimeBasedRollingPolicy.)
-                               (.setActiveFileName file)
+      (doseq [file files]
+        (let [path           (if (string? file) file (:file file))
+              json           (if (string? file) false (:json file))
+              rolling-policy (doto (TimeBasedRollingPolicy.)
+                               (.setActiveFileName path)
                                (.setFileNamePattern
-                                (str file ".%d{yyyy-MM-dd}.gz"))
+                                (str path ".%d{yyyy-MM-dd}.gz"))
                                (.activateOptions))
               log-appender   (doto (RollingFileAppender.)
                                (.setRollingPolicy rolling-policy)
