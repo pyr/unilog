@@ -13,7 +13,15 @@ logging frameworks which
 allow external configuration.
 
 logconfig provides a simple and somewhat opiniated way of configuring
-[log4j](http://logging.apache.org/log4j/).
+[log4j](http://logging.apache.org/log4j/) through a simple clojure
+maps.
+
+
+## Coordinates
+
+```clojure
+[org.spootnik/logconfig "0.7.1"]
+```
 
 ## Usage
 
@@ -22,6 +30,8 @@ configuration in a YAML file:
 
 
 ```yaml
+other-config:
+  foo: bar
 logging:
   level: info
   console: true
@@ -32,6 +42,8 @@ logging:
   overrides:
     some.namespace: debug
 ```
+You would supply configuration by parsing the YAML and then
+calling `start-logging!`
 
 ```clojure
 (require '[clj-yaml.core          :refer [parse-string]]
@@ -42,6 +54,10 @@ logging:
   (start-logging! (merge default-logging (:logging config)))
   ;; rest of program startup)
 ```
+
+## API documentation
+
+Full API documentation is available at http://pyr.github.io/logconfig
 
 ## License
 
