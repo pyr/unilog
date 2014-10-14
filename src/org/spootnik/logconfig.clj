@@ -78,7 +78,7 @@ example:
         (.addAppender root-logger (ConsoleAppender. (layout json))))
 
       (doseq [file files]
-        (let [path           (if (string? file) file (:file file))
+        (let [path           (if (string? file) file (:path file))
               json           (if (string? file) false (:json file))
               rolling-policy (doto (TimeBasedRollingPolicy.)
                                (.setActiveFileName path)
