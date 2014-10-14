@@ -1,4 +1,4 @@
-(defproject org.spootnik/logconfig "0.7.0"
+(defproject org.spootnik/logconfig "0.7.1"
   :description "easy logging setup"
   :url "https://github.com/pyr/logset"
   :license {:name "Eclipse Public License"
