@@ -65,7 +65,8 @@ example:
   "
   [{:keys [external console files pattern level overrides json]}]
   (let [j-layout    (JSONEventLayoutV1.)
-        p-layout    (EnhancedPatternLayout. pattern)
+        p-layout    (EnhancedPatternLayout.
+                     (or pattern "%p [%d] %t - %c - %m%n"))
         layout      (fn [json?] (if json? j-layout p-layout))
         root-logger (Logger/getRootLogger)]
 
