@@ -51,6 +51,8 @@
       in a different manner (by supplying a log4j properties
       file through the `log4j.configuration` property for instance.
 
+   When called with no arguments, assume an empty map
+
 example:
 
 ```clojure
@@ -63,37 +65,40 @@ example:
  :overrides {\"some.namespace\" \"debug\"}}
 ```
   "
-  [{:keys [external console files pattern level overrides json]}]
-  (let [j-layout    (JSONEventLayoutV1.)
-        p-layout    (EnhancedPatternLayout.
-                     (or pattern "%p [%d] %t - %c - %m%n"))
-        layout      (fn [json?] (if json? j-layout p-layout))
-        root-logger (Logger/getRootLogger)]
+  ([{:keys [external console files pattern level overrides json]
+     :or   {console true}}]
+     (let [j-layout    (JSONEventLayoutV1.)
+           p-layout    (EnhancedPatternLayout.
+                        (or pattern "%p [%d] %t - %c - %m%n"))
+           layout      (fn [json?] (if json? j-layout p-layout))
+           root-logger (Logger/getRootLogger)]
 
-    (when-not external
+       (when-not external
 
-      (.removeAllAppenders root-logger)
+         (.removeAllAppenders root-logger)
 
-      (when console
-        (.addAppender root-logger (ConsoleAppender. (layout json))))
+         (when console
+           (.addAppender root-logger (ConsoleAppender. (layout json))))
 
-      (doseq [file files]
-        (let [path           (if (string? file) file (:path file))
-              json           (if (string? file) false (:json file))
-              rolling-policy (doto (TimeBasedRollingPolicy.)
-                               (.setActiveFileName path)
-                               (.setFileNamePattern
-                                (str path ".%d{yyyy-MM-dd}.gz"))
-                               (.activateOptions))
-              log-appender   (doto (RollingFileAppender.)
-                               (.setRollingPolicy rolling-policy)
-                               (.setLayout (layout json))
-                               (.activateOptions))]
-          (.addAppender root-logger log-appender)))
+         (doseq [file files]
+           (let [path           (if (string? file) file (:path file))
+                 json           (if (string? file) false (:json file))
+                 rolling-policy (doto (TimeBasedRollingPolicy.)
+                                  (.setActiveFileName path)
+                                  (.setFileNamePattern
+                                   (str path ".%d{yyyy-MM-dd}.gz"))
+                                  (.activateOptions))
+                 log-appender   (doto (RollingFileAppender.)
+                                  (.setRollingPolicy rolling-policy)
+                                  (.setLayout (layout json))
+                                  (.activateOptions))]
+             (.addAppender root-logger log-appender)))
 
-      (.setLevel root-logger (get levels level Level/INFO))
+         (.setLevel root-logger (get levels level Level/INFO))
 
-      (doseq [[logger level] overrides
-              :let [logger (Logger/getLogger (name logger))
-                    level  (get levels level Level/DEBUG)]]
-        (.setLevel logger level)))))
+         (doseq [[logger level] overrides
+                 :let [logger (Logger/getLogger (name logger))
+                       level  (get levels level Level/DEBUG)]]
+           (.setLevel logger level)))))
+  ([]
+     (start-logging! {})))
