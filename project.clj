@@ -1,6 +1,6 @@
-(defproject org.spootnik/logconfig "0.7.1"
+(defproject org.spootnik/logconfig "0.7.2"
   :description "easy logging setup"
-  :url "https://github.com/pyr/logset"
+  :url "https://github.com/pyr/logconfig"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :plugins [[codox "0.8.10"]]
