@@ -20,7 +20,7 @@ maps.
 ## Coordinates
 
 ```clojure
-[org.spootnik/logconfig "0.7.1"]
+[org.spootnik/logconfig "0.7.2"]
 ```
 
 ## Usage
