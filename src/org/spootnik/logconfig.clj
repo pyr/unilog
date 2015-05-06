@@ -98,7 +98,7 @@ example:
 
          (doseq [[logger level] overrides
                  :let [logger (Logger/getLogger (name logger))
-                       level  (get levels level Level/DEBUG)]]
+                       level  (get levels level Level/INFO)]]
            (.setLevel logger level)))))
   ([]
      (start-logging! {})))
