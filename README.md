@@ -38,7 +38,7 @@ logging:
   files:
     - "/var/log/program.log"
     - file: "/var/log/program-json.log"
-      json: true
+      encoder: json
   overrides:
     some.namespace: debug
 ```
@@ -53,7 +53,66 @@ calling `start-logging!`
       config           (parse-string (slurp "my-config.yml"))]
   (start-logging! (merge default-logging (:logging config)))
   ;; rest of program startup)
-```
+  ```
+
+## Configuration details
+
+The configuration, given as a map to `start-logging!` understands
+a number of keys.
+
+### Global Options
+
+- `:level`: Default logging level, any of `debug`, `info`, `warn`, `error`, `all`, `trace`, `off`.
+- `:external`: Do not try to configure logging, an external configuration has been supplied.
+- `:overrides`: Provide a map of namespace to level, overriding the provided default level.
+
+### Console
+
+If the `:console` key is present in the configuration map, it may be any of:
+
+- `false`: Do not log to the console.
+- `true`: Log to the console, using a pattern encoder and the default pattern.
+- A string: Log to the console, using a pattern encoder and the supplied pattern string.
+- A map: Log to the console, other attributes are taken from the map. For instance: `{:console {:encoder :json}}`.
+
+### File
+
+If the `:file` key is present in the configuration map, it may be any of:
+
+- A string: Log to the provided file, using a pattern encoder and the default pattern.
+- A map: Log to a file, taking configuration attributes from the map. For instance: `{:file {:file "/var/log/foo.log" :encoder :json}}`
+
+### Files
+
+Expects a sequence of valid configurations for `File`.
+
+### Appenders
+
+As for `Files`, but do not assume a specific appender, expect it to be supplied in the configuration map.
+
+## Encoders
+
+The following encoders are currently supported:
+
+- `PatternLayoutEncoder`: Using a default pattern of `"%p [%d] %t - %c %m%n"`. Use `:encoder :pattern`.
+- `LogstashEncoder`: If you wish to format messages for logstash. Use `:encoder :json`.
+
+## Appenders
+
+The following appenders are currently supported:
+
+- `ConsoleAppender`. Use `:appender :console`.
+- `FileAppender`. Use `:appender :file`.
+
+## Extending
+
+If you wish to supply your own configuration functions for appenders or encoders, you may do so by
+adding multi-methods for `build-appender` and `build-encoder` respectively. `build-appender` dispatches
+on the `:appender` key in a configuration map while `build-encoder` dispatches on the `:encoder` key.
+
+These functions receive the provided configuration map and may thus expect specific keys to be present
+to perform their configuration.
+
 
 ## API documentation
 
