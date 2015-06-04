@@ -5,7 +5,6 @@
             :url "https://github.com/pyr/unilog/tree/master/LICENSE"}
   :plugins [[codox "0.8.10"]]
   :codox {:defaults {:doc/format :markdown}}
-  :main unilog.core
   :dependencies [[org.clojure/clojure                           "1.7.0-RC1"]
                  [net.logstash.logback/logstash-logback-encoder "4.2"]
                  [org.slf4j/slf4j-api                           "1.7.12"]
