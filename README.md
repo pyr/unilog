@@ -1,10 +1,11 @@
-# logconfig: easy log configuration for clojure projects
+# unilog: logging should be easy!
 
 [clojure.tools.logging](https://github.com/clojure/tools.logging) is
 a great library to perform logging. It walks through several available
 options such as [slf4j](http://www.slf4j.org),
-[commons-logging](http://commons.apache.org/logging) and
-[log4j](http://logging.apache.org/log4j/).
+[commons-logging](http://commons.apache.org/logging),
+[log4j](http://logging.apache.org/log4j/),
+and [logback](http://logback.qos.ch).
 
 While the logging itself is simple and straightforward, navigating the
 many ways to configure logging can be a bit daunting since the above
@@ -12,15 +13,14 @@ logging frameworks which
 [clojure.tools.logging](https://github.com/clojure/tools.logging)
 allow external configuration.
 
-logconfig provides a simple and somewhat opiniated way of configuring
-[log4j](http://logging.apache.org/log4j/) through a simple clojure
-maps.
+Unilog provides a simple and somewhat opiniated way of configuring
+[logback](http://logback.qos.ch/) through simple clojure maps.
 
 
 ## Coordinates
 
 ```clojure
-[org.spootnik/logconfig "0.7.2"]
+[spootnik/unilog "0.7.4"]
 ```
 
 ## Usage
@@ -46,8 +46,8 @@ You would supply configuration by parsing the YAML and then
 calling `start-logging!`
 
 ```clojure
-(require '[clj-yaml.core          :refer [parse-string]]
-         '[org.spootnik.logconfig :refer [start-logging!]])
+(require '[clj-yaml.core  :refer [parse-string]]
+         '[unilog.config  :refer [start-logging!]])
 
 (let [default-logging  {:level "info" :console true}
       config           (parse-string (slurp "my-config.yml"))]
@@ -57,11 +57,9 @@ calling `start-logging!`
 
 ## API documentation
 
-Full API documentation is available at http://pyr.github.io/logconfig
+Full API documentation is available at http://pyr.github.io/unilog
 
 ## License
 
 Copyright © 2014 Pierre-Yves Ritschard <pyr@spootnik.org>
-
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+MIT/ISC License, See LICENSE file.
