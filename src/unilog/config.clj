@@ -10,14 +10,17 @@
    Two extension mechanism are provided to add support for more appenders and encoders,
    see `build-appender` and `build-encoder` respectively"
   (:import org.slf4j.LoggerFactory
+           ch.qos.logback.classic.net.SocketAppender
            ch.qos.logback.classic.encoder.PatternLayoutEncoder
            ch.qos.logback.classic.Logger
            ch.qos.logback.classic.BasicConfigurator
            ch.qos.logback.classic.Level
            ch.qos.logback.core.ConsoleAppender
            ch.qos.logback.core.FileAppender
+           ch.qos.logback.core.OutputStreamAppender
            ch.qos.logback.core.rolling.TimeBasedRollingPolicy
            ch.qos.logback.core.rolling.RollingFileAppender
+           ch.qos.logback.core.util.Duration
            net.logstash.logback.encoder.LogstashEncoder))
 
 ;; Configuration constants
@@ -112,9 +115,11 @@
   (assoc config :encoder (LogstashEncoder.)))
 
 (defmethod build-encoder :default
-  [config]
-  (assoc config :encoder (doto (PatternLayoutEncoder.)
-                           (.setPattern default-pattern))))
+  [{:keys [appender] :as config}]
+  (cond-> config
+    (instance? OutputStreamAppender appender)
+    (assoc :encoder (doto (PatternLayoutEncoder.)
+                      (.setPattern default-pattern)))))
 
 ;; Open dispatch method to build appenders
 ;; =======================================
@@ -132,6 +137,20 @@
   [{:keys [file] :as config}]
   (assoc config :appender (doto (FileAppender.)
                             (.setFile file))))
+
+(defmethod build-appender :socket
+  [{:keys [remote-host port queue-size reconnection-delay event-delay-limit]
+    :as config}]
+  (let [appender (SocketAppender.)]
+    (.setRemoteHost appender remote-host)
+    (.setPort appender (int port))
+    (when queue-size
+      (.setQueueSize appender (int queue-size)))
+    (when reconnection-delay
+      (.setReconnectionDelay appender (Duration/valueOf reconnection-delay)))
+    (when event-delay-limit
+      (.setEventDelayLimit appender (Duration/valueOf event-delay-limit)))
+    (assoc config :appender appender)))
 
 (defmethod build-appender :default
   [val]
@@ -176,24 +195,24 @@ example:
 ```
   "
   ([{:keys [external level overrides] :as config}]
-   (let [level   (get levels (some-> level name) Level/INFO)
-         root    (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
-         context (LoggerFactory/getILoggerFactory)
-         configs (->> (merge {:console true} config)
-                      (map appender-config)
-                      (flatten)
-                      (remove nil?))]
+   (when-not external
+     (let [level   (get levels (some-> level name) Level/INFO)
+           root    (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
+           context (LoggerFactory/getILoggerFactory)
+           configs (->> (merge {:console true} config)
+                        (map appender-config)
+                        (flatten)
+                        (remove nil?)
+                        (map build-appender)
+                        (map build-encoder))]
 
-     (when-not external
        (.detachAndStopAllAppenders root)
 
-       (doseq [config configs
-               :let [config   (-> config build-encoder build-appender)
-                     encoder  (:encoder config)
-                     appender (:appender config)]]
-         (.setContext encoder context)
-         (.start encoder)
-         (.setEncoder appender encoder)
+       (doseq [{:keys [encoder appender]} configs]
+         (when encoder
+           (.setContext encoder context)
+           (.start encoder)
+           (.setEncoder appender encoder))
          (.setContext appender context)
          (.start appender)
          (.addAppender root appender))
