@@ -1,5 +1,5 @@
 (defproject spootnik/unilog "0.7.4"
-  :description "The easy way to log in clojure"
+  :description "logging should be easy!"
   :url "https://github.com/pyr/unilog"
   :license {:name "MIT License"
             :url "https://github.com/pyr/unilog/tree/master/LICENSE"}

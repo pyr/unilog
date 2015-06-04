@@ -113,6 +113,21 @@ on the `:appender` key in a configuration map while `build-encoder` dispatches o
 These functions receive the provided configuration map and may thus expect specific keys to be present
 to perform their configuration.
 
+## Example configuration map
+
+```clojure
+{:console false
+ :files ["/var/log/standard.log"
+         {:file "/var/log/standard-json.log" :encoder :json}]
+ :appenders [{:appender :file
+              :encoder  :json
+              :file     "/var/log/other-json.log"}
+             {:appender :file
+              :encoder  :pattern
+              :pattern  "%p [%d] %t - %c %m%n"
+              :file     "/var/log/other-pattern.log"}]}
+```
+
 
 ## API documentation
 
