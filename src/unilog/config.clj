@@ -58,7 +58,6 @@
 
 (defmethod appender-config :console
   [[_ val]]
-  (println "building console appender configuration: " (pr-str val))
   (when (boolean val)
     (cond (string? val)  {:appender :console
                           :encoder  :pattern
@@ -72,7 +71,6 @@
 
 (defmethod appender-config :file
   [[_ val]]
-  (println "building file appender configuration: " (pr-str val))
   (cond (string? val) (-> default-encoder
                           (assoc :appender :file)
                           (assoc :file val))
@@ -84,13 +82,11 @@
 
 (defmethod appender-config :files
   [[_ files]]
-  (println "building file appender configurations: " (pr-str val))
   (for [file files]
     (appender-config [:file file])))
 
 (defmethod appender-config :appenders
   [[_ appenders]]
-  (println "building generic appender configurations: " (pr-str val))
   (for [appender appenders
         :when (map? appender)]
     (-> appender
@@ -107,19 +103,16 @@
 
 (defmethod build-encoder :pattern
   [{:keys [pattern] :as config}]
-  (println "building pattern encoder" (pr-str pattern))
   (let [encoder (doto (PatternLayoutEncoder.)
                   (.setPattern (or pattern default-pattern)))]
     (assoc config :encoder encoder)))
 
 (defmethod build-encoder :json
   [config]
-  (println "building json encoder")
   (assoc config :encoder (LogstashEncoder.)))
 
 (defmethod build-encoder :default
   [config]
-  (println "building default pattern encoder")
   (assoc config :encoder (doto (PatternLayoutEncoder.)
                            (.setPattern default-pattern))))
 
@@ -133,17 +126,15 @@
 
 (defmethod build-appender :console
   [config]
-  (println "building console appender")
   (assoc config :appender (ConsoleAppender.)))
 
 (defmethod build-appender :file
   [{:keys [file] :as config}]
-  (println "building file appender for:" (pr-str file))
   (assoc config :appender (doto (FileAppender.)
                             (.setFile file))))
 
 (defmethod build-appender :default
-  [val]7
+  [val]
   (throw (ex-info "invalid log appender configuration" {:config val})))
 
 (defn start-logging!
