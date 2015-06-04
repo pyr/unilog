@@ -1,11 +1,14 @@
 (ns unilog.config
-  "Small veneer on top of logback and commons logging.
+  "Small veneer on top of logback.
    Originally based on the logging initialization in riemann.
+   Now diverged quite a bit.
 
-   A single public function is exposed: `start-logging!` which
+   For configuration, a single public function is exposed: `start-logging!` which
    takes care of configuring logback, later logging is done through
-   standard facilities, such as [clojure.tools.logging](https://github.com/clojure/tools.logging)
-  "
+   standard facilities, such as [clojure.tools.logging](https://github.com/clojure/tools.logging).
+
+   Two extension mechanism are provided to add support for more appenders and encoders,
+   see `build-appender` and `build-encoder` respectively"
   (:import org.slf4j.LoggerFactory
            ch.qos.logback.classic.encoder.PatternLayoutEncoder
            ch.qos.logback.classic.Logger
@@ -31,10 +34,11 @@
    "off"   Level/OFF})
 
 (def default-pattern
-  "Default pattern for PatternLayout"
+  "Default pattern for PatternLayoutEncoder"
   "%p [%d] %t - %c %m%n")
 
 (def default-encoder
+  "Default encoder and pattern configuration"
   {:encoder :pattern
    :pattern  default-pattern})
 
@@ -42,7 +46,11 @@
 ;; Open dispatch method to build appender configuration
 ;; ====================================================
 
-(defmulti appender-config first)
+(defmulti appender-config
+  "Called by walking through each key/val pair in the main configuration
+   map. This allows for early transformation of quick access keys such as:
+   `:console`, `:file`, and `:files`"
+  first)
 
 (defmethod appender-config :default
   [_]
@@ -92,7 +100,10 @@
 ;; Open dispatch method to build encoders based on configuration
 ;; =============================================================
 
-(defmulti build-encoder :encoder)
+(defmulti build-encoder
+  "Given a prepared configuration map, associate a prepared encoder
+  to the `:encoder` key."
+  :encoder)
 
 (defmethod build-encoder :pattern
   [{:keys [pattern] :as config}]
@@ -115,7 +126,10 @@
 ;; Open dispatch method to build appenders
 ;; =======================================
 
-(defmulti build-appender :appender)
+(defmulti build-appender
+  "Given a prepared configuration map, associate a prepared appender
+  to the `:appender` key."
+  :appender)
 
 (defmethod build-appender :console
   [config]
@@ -140,18 +154,22 @@
    - `:level`: Default level at which to log.
    - `:pattern`: The pattern to use for logging text messages
    - `:console`: Append messages to the console using a simple pattern
-      layout
+      layout. If value is a boolean, treat it as such and use a default
+      encoder. If value is a string, treat it as a pattern and use
+      a pattern encoder. If value is a map, expect encoder configuration
+      in the map.
+   - `:file`:  A file to log to. May either be a string, the log file, or
+      a map which accepts optional encoder configuration.
    - `:files`: A list of either strings or maps. strings will create
       text files, maps are expected to contain a `:path` key as well
       as an optional `:json` which when present and true will switch
       the layout to a JSONEventLayout for the logger.
    - `:overrides`: A map of namespace or class-name to log level,
       this will supersede the global level.
-   - `:json`: When true, console logging will use a JSON Event layout
    - `:external`: Do not proceed with configuration, this
       is useful when logging configuration is provided
-      in a different manner (by supplying a log4j properties
-      file through the `log4j.configuration` property for instance.
+      in a different manner (by supplying your own logback config file
+      for instance).
 
    When called with no arguments, assume an empty map
 
@@ -160,10 +178,9 @@ example:
 ```clojure
 {:console   true
  :level     \"info\"
- :pattern   \"%p [%d] %t - %c - %m%n\"
  :files     [\"/var/log/app.log\"
-             {:path \"/var/log/app-json.log\"
-              :json true}]
+             {:file \"/var/log/app-json.log\"
+              :encoder json}]
  :overrides {\"some.namespace\" \"debug\"}}
 ```
   "
