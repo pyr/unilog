@@ -21,6 +21,7 @@
            ch.qos.logback.core.rolling.TimeBasedRollingPolicy
            ch.qos.logback.core.rolling.RollingFileAppender
            ch.qos.logback.core.util.Duration
+           ch.qos.logback.core.net.SyslogOutputStream
            net.logstash.logback.encoder.LogstashEncoder))
 
 ;; Configuration constants
@@ -152,6 +153,15 @@
       (.setEventDelayLimit appender (Duration/valueOf event-delay-limit)))
     (assoc config :appender appender)))
 
+(defmethod build-appender :syslog
+  [{:keys [host port] :as config}]
+  (assoc config :appender (fn [encoder context]
+                            (doto (OutputStreamAppender.)
+                              (.setContext context)
+                              (.setEncoder encoder)
+                              (.setOutputStream
+                               (SyslogOutputStream. host (int port)))))))
+
 (defmethod build-appender :default
   [val]
   (throw (ex-info "invalid log appender configuration" {:config val})))
@@ -159,8 +169,7 @@
 (defn start-logging!
   "Initialize log4j logging from a map.
 
-   The map accepts the following keys as keywords:
-
+   The map accepts the following keys as keywords
    - `:level`: Default level at which to log.
    - `:pattern`: The pattern to use for logging text messages
    - `:console`: Append messages to the console using a simple pattern
@@ -210,12 +219,16 @@ example:
 
        (doseq [{:keys [encoder appender]} configs]
          (when encoder
+           (println "starting an encoder, like totally!")
            (.setContext encoder context)
-           (.start encoder)
-           (.setEncoder appender encoder))
-         (.setContext appender context)
-         (.start appender)
-         (.addAppender root appender))
+           (.start encoder))
+         (let [appender (if (fn? appender)
+                          (appender encoder context)
+                          (doto appender
+                            (.setEncoder encoder)
+                            (.setContext context)))]
+           (.start appender)
+           (.addAppender root appender)))
 
        (.setLevel root level)
        (doseq [[logger level] overrides
