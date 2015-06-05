@@ -101,8 +101,11 @@ The following encoders are currently supported:
 
 The following appenders are currently supported:
 
-- `ConsoleAppender`. Use `:appender :console`.
-- `FileAppender`. Use `:appender :file`.
+- `:console`.
+- `:file`. Understands the following arguments: `:file`.
+- `:rolling-file`. Log to files and rotate. Understands the following arguments: `:file`, `:rolling-policy`, `:triggering-policy`.
+- `:socket`. Understands the following arguments: `:remote-host`, `:port`, `:queue-size`, `reconnection-delay`, `:event-delay-limit`.
+- `:syslog`. Understands the following arguments: `:host`, `:port`.
 
 ## Extending
 
