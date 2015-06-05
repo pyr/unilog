@@ -19,6 +19,8 @@
            ch.qos.logback.core.FileAppender
            ch.qos.logback.core.OutputStreamAppender
            ch.qos.logback.core.rolling.TimeBasedRollingPolicy
+           ch.qos.logback.core.rolling.FixedWindowRollingPolicy
+           ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
            ch.qos.logback.core.rolling.RollingFileAppender
            ch.qos.logback.core.util.Duration
            ch.qos.logback.core.net.SyslogOutputStream
@@ -122,6 +124,43 @@
     (assoc :encoder (doto (PatternLayoutEncoder.)
                       (.setPattern default-pattern)))))
 
+;;
+;; Open dispatch to build a file rolling policy
+;; ============================================
+
+(defmulti build-rolling-policy
+  "Given a configuration map, build a RollingPolicy instance."
+  :type)
+
+(defmethod build-rolling-policy :fixed-window
+  [{:keys [file pattern max-index min-index]
+    :or {max-index 5
+         min-index 1
+         pattern "%d{yyyy-MM-dd}.%i.gz"}}]
+  (doto (FixedWindowRollingPolicy.)
+    (.setFileNamePattern (str file pattern))
+    (.setMinIndex (int min-index))
+    (.setMaxIndex (int max-index))))
+
+(defmethod build-rolling-policy :time-based
+  [{:keys [file pattern] :or {pattern ".%d{yyyy-MM-dd}.gz"}}]
+  (doto (TimeBasedRollingPolicy.)
+    (.setFilePattern (str file pattern))))
+
+;;
+;; Open dispatch to build a triggering policy for rolling files
+;; ============================================================
+
+(defmulti build-triggering-policy
+  "Given a configuration map, build a TriggeringPolicy instance."
+  :type)
+
+
+(defmethod build-triggering-policy :size-based
+  [{:keys [max-size]
+    :or {max-size SizeBasedTriggeringPolicy/DEFAULT_MAX_FILE_SIZE}}]
+  (SizeBasedTriggeringPolicy. (str max-size)))
+
 ;; Open dispatch method to build appenders
 ;; =======================================
 
@@ -141,6 +180,11 @@
 
 (defmethod build-appender :socket
   [{:keys [remote-host port queue-size reconnection-delay event-delay-limit]
+    :or {remote-host "localhost"
+         port        2004
+         queue-size  500
+         reconnection-delay "10 seconds"
+         event-delay-limit "10 seconds"}
     :as config}]
   (let [appender (SocketAppender.)]
     (.setRemoteHost appender remote-host)
@@ -154,13 +198,54 @@
     (assoc config :appender appender)))
 
 (defmethod build-appender :syslog
-  [{:keys [host port] :as config}]
+  [{:keys [host port] :or {host "localhost" port 514} :as config}]
   (assoc config :appender (fn [encoder context]
                             (doto (OutputStreamAppender.)
                               (.setContext context)
                               (.setEncoder encoder)
                               (.setOutputStream
                                (SyslogOutputStream. host (int port)))))))
+
+(defmethod build-appender :rolling-file
+  [{:keys [rolling-policy triggering-policy file]
+    :or {rolling-policy    :fixed-window
+         triggering-policy :size-based}
+    :as config}]
+  (assoc config :appender (doto (RollingFileAppender.)
+                            (.setRollingPolicy
+                             (build-rolling-policy
+                              (merge
+                               {:file file}
+                               (cond
+                                 (keyword? rolling-policy)
+                                 {:type rolling-policy}
+
+                                 (string? rolling-policy)
+                                 {:type (keyword rolling-policy)}
+
+                                 (map? rolling-policy)
+                                 (update-in rolling-policy [:type] keyword)
+
+                                 :else
+                                 (throw (ex-info "invalid rolling policy"
+                                                 {:config rolling-policy}))))))
+                            (.setTriggeringPolicy
+                             (build-triggering-policy
+                              (merge {:file file}
+                               (cond
+                                 (keyword? triggering-policy)
+                                 {:type triggering-policy}
+
+                                 (string? triggering-policy)
+                                 {:type (keyword triggering-policy)}
+
+                                 (map? triggering-policy)
+                                 (update-in triggering-policy [:type] keyword)
+
+                                 :else
+                                 (throw
+                                  (ex-info "invalid triggering policy"
+                                           {:config triggering-policy})))))))))
 
 (defmethod build-appender :default
   [val]
@@ -219,7 +304,6 @@ example:
 
        (doseq [{:keys [encoder appender]} configs]
          (when encoder
-           (println "starting an encoder, like totally!")
            (.setContext encoder context)
            (.start encoder))
          (let [appender (if (fn? appender)
