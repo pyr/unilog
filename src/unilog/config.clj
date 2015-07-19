@@ -136,16 +136,19 @@
   [{:keys [file pattern max-index min-index]
     :or {max-index 5
          min-index 1
-         pattern "%d{yyyy-MM-dd}.%i.gz"}}]
+         pattern "%d{yyyy-MM-dd}.%i.gz"}}
+   parent]
   (doto (FixedWindowRollingPolicy.)
     (.setFileNamePattern (str file pattern))
     (.setMinIndex (int min-index))
-    (.setMaxIndex (int max-index))))
+    (.setMaxIndex (int max-index))
+    (.setParent parent)))
 
 (defmethod build-rolling-policy :time-based
-  [{:keys [file pattern] :or {pattern ".%d{yyyy-MM-dd}.gz"}}]
+  [{:keys [file pattern] :or {pattern ".%d{yyyy-MM-dd}.gz"}} parent]
   (doto (TimeBasedRollingPolicy.)
-    (.setFilePattern (str file pattern))))
+    (.setFilePattern (str file pattern))
+    (.setParent parent)))
 
 ;;
 ;; Open dispatch to build a triggering policy for rolling files
@@ -211,41 +214,44 @@
     :or {rolling-policy    :fixed-window
          triggering-policy :size-based}
     :as config}]
-  (assoc config :appender (doto (RollingFileAppender.)
-                            (.setRollingPolicy
-                             (build-rolling-policy
-                              (merge
-                               {:file file}
-                               (cond
-                                 (keyword? rolling-policy)
-                                 {:type rolling-policy}
+  (let [appender (RollingFileAppender.)]
+    (assoc config :appender (doto appender
+                              (.setFile file)
+                              (.setRollingPolicy
+                               (build-rolling-policy
+                                (merge
+                                 {:file file}
+                                 (cond
+                                   (keyword? rolling-policy)
+                                   {:type rolling-policy}
 
-                                 (string? rolling-policy)
-                                 {:type (keyword rolling-policy)}
+                                   (string? rolling-policy)
+                                   {:type (keyword rolling-policy)}
 
-                                 (map? rolling-policy)
-                                 (update-in rolling-policy [:type] keyword)
+                                   (map? rolling-policy)
+                                   (update-in rolling-policy [:type] keyword)
 
-                                 :else
-                                 (throw (ex-info "invalid rolling policy"
-                                                 {:config rolling-policy}))))))
-                            (.setTriggeringPolicy
-                             (build-triggering-policy
-                              (merge {:file file}
-                               (cond
-                                 (keyword? triggering-policy)
-                                 {:type triggering-policy}
+                                   :else
+                                   (throw (ex-info "invalid rolling policy"
+                                                   {:config rolling-policy}))))
+                                appender))
+                              (.setTriggeringPolicy
+                               (build-triggering-policy
+                                (merge {:file file}
+                                       (cond
+                                         (keyword? triggering-policy)
+                                         {:type triggering-policy}
 
-                                 (string? triggering-policy)
-                                 {:type (keyword triggering-policy)}
+                                         (string? triggering-policy)
+                                         {:type (keyword triggering-policy)}
 
-                                 (map? triggering-policy)
-                                 (update-in triggering-policy [:type] keyword)
+                                         (map? triggering-policy)
+                                         (update-in triggering-policy [:type] keyword)
 
-                                 :else
-                                 (throw
-                                  (ex-info "invalid triggering policy"
-                                           {:config triggering-policy})))))))))
+                                         :else
+                                         (throw
+                                          (ex-info "invalid triggering policy"
+                                                   {:config triggering-policy}))))))))))
 
 (defmethod build-appender :default
   [val]
