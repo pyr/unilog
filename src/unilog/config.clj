@@ -136,18 +136,22 @@
   [{:keys [file pattern max-index min-index parent]
     :or {max-index 5
          min-index 1
-         pattern "%d{yyyy-MM-dd}.%i.gz"}}]
+         pattern ".%i.gz"}}]
   (doto (FixedWindowRollingPolicy.)
     (.setFileNamePattern (str file pattern))
     (.setMinIndex (int min-index))
     (.setMaxIndex (int max-index))
-    (.setParent parent)))
+    (.setParent parent)
+    (.setContext (.getContext parent))
+    (.start)))
 
 (defmethod build-rolling-policy :time-based
   [{:keys [file pattern parent] :or {pattern ".%d{yyyy-MM-dd}.gz"}}]
   (doto (TimeBasedRollingPolicy.)
-    (.setFilePattern (str file pattern))
-    (.setParent parent)))
+    (.setFileNamePattern (str file pattern))
+    (.setParent parent)
+    (.setContext (.getContext parent))
+    (.start)))
 
 ;;
 ;; Open dispatch to build a triggering policy for rolling files
@@ -209,13 +213,14 @@
                                (SyslogOutputStream. host (int port)))))))
 
 (defmethod build-appender :rolling-file
-  [{:keys [rolling-policy triggering-policy file]
+  [{:keys [rolling-policy triggering-policy file context]
     :or {rolling-policy    :fixed-window
          triggering-policy :size-based}
     :as config}]
   (let [appender (RollingFileAppender.)]
     (assoc config :appender (doto appender
                               (.setFile file)
+                              (.setContext context)
                               (.setRollingPolicy
                                (build-rolling-policy
                                 (merge
@@ -298,11 +303,12 @@ example:
      (let [level   (get levels (some-> level name) Level/INFO)
            root    (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
            context (LoggerFactory/getILoggerFactory)
+           assoc-context (fn [f] (comp f #(assoc % :context context)))
            configs (->> (merge {:console true} config)
                         (map appender-config)
                         (flatten)
                         (remove nil?)
-                        (map build-appender)
+                        (map (assoc-context build-appender))
                         (map build-encoder))]
 
        (.detachAndStopAllAppenders root)
