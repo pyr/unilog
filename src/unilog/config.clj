@@ -133,11 +133,10 @@
   :type)
 
 (defmethod build-rolling-policy :fixed-window
-  [{:keys [file pattern max-index min-index]
+  [{:keys [file pattern max-index min-index parent]
     :or {max-index 5
          min-index 1
-         pattern "%d{yyyy-MM-dd}.%i.gz"}}
-   parent]
+         pattern "%d{yyyy-MM-dd}.%i.gz"}}]
   (doto (FixedWindowRollingPolicy.)
     (.setFileNamePattern (str file pattern))
     (.setMinIndex (int min-index))
@@ -145,7 +144,7 @@
     (.setParent parent)))
 
 (defmethod build-rolling-policy :time-based
-  [{:keys [file pattern] :or {pattern ".%d{yyyy-MM-dd}.gz"}} parent]
+  [{:keys [file pattern parent] :or {pattern ".%d{yyyy-MM-dd}.gz"}}]
   (doto (TimeBasedRollingPolicy.)
     (.setFilePattern (str file pattern))
     (.setParent parent)))
@@ -233,8 +232,8 @@
 
                                    :else
                                    (throw (ex-info "invalid rolling policy"
-                                                   {:config rolling-policy}))))
-                                appender))
+                                                   {:config rolling-policy})))
+                                 {:parent appender})))
                               (.setTriggeringPolicy
                                (build-triggering-policy
                                 (merge {:file file}
