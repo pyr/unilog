@@ -218,12 +218,9 @@
 
 (defmethod build-appender :syslog
   [{:keys [host port] :or {host "localhost" port 514} :as config}]
-  (assoc config :appender (fn [encoder context]
-                            (doto (OutputStreamAppender.)
-                              (.setContext context)
-                              (.setEncoder encoder)
-                              (.setOutputStream
-                               (SyslogOutputStream. host (int port)))))))
+  (assoc config :appender (doto (OutputStreamAppender.)
+                            (.setOutputStream
+                             (SyslogOutputStream. host (int port))))))
 
 (defmethod build-appender :rolling-file
   [{:keys [rolling-policy triggering-policy file]
@@ -238,33 +235,50 @@
                           (map? policy) (update policy :type keyword)
                           :else
                           (throw (ex-info (format "invalid %s policy" type)
-                                          {:config policy}))))]
+                                          {:config policy}))))
+        format-policy (comp #(assoc % :file file) format-policy)
         rolling-policy (format-policy "rolling" rolling-policy)
-    (assoc config :appender
-           (fn [encoder context]
-             (when-not (= :time-based (:type rolling-policy))
-               (doto appender
-                 (.setTriggeringPolicy
-                  (doto (build-triggering-policy
-                         (merge {:file file}
-                                (format-policy "triggering"
-                                               triggering-policy)))
-                    (.setContext context)
-                    (.start)))))
-             (doto appender
-               (.setFile file)
-               (.setContext context)
-               (.setEncoder encoder)
-               (.setRollingPolicy
-                (doto (build-rolling-policy
-                       (merge {:file file} rolling-policy))
-                  (.setParent appender)
-                  (.setContext context)
-                  (.start))))))))
+        triggering-policy (format-policy "triggering" triggering-policy)]
+    (.setFile appender file)
+    (when-not (= :time-based (:type rolling-policy))
+      (.setTriggeringPolicy appender
+                            (build-triggering-policy triggering-policy)))
+    (.setRollingPolicy appender (build-rolling-policy rolling-policy))
+    (assoc config :appender appender)))
 
 (defmethod build-appender :default
   [val]
   (throw (ex-info "invalid log appender configuration" {:config val})))
+
+;;; start-appender!
+;;; =======================================
+(defmulti start-appender!
+  "Start an appender according to appender type"
+  (fn [appender context]
+    (type appender)))
+
+(defmethod start-appender! ch.qos.logback.core.rolling.RollingFileAppender
+  [appender context]
+  ;; The order of operations is important. If you change it, errors will occur.
+  (.setContext appender context)
+  (doto (.getRollingPolicy appender)
+    (.setParent appender)
+    (.setContext context)
+    (.start))
+  (when-let [tp (.getTriggeringPolicy appender)]
+    ;; Since TimeBasedRollingPolicy can serve as a triggering policy,
+    ;; start triggering policy only if it is not started already.
+    (if-not (.isStarted tp)
+      (doto tp
+        (.setContext context)
+        (.start))))
+  (.start appender))
+
+(defmethod start-appender! :default
+  [appender context]
+  (doto appender
+    (.setContext context)
+    (.start)))
 
 (defn start-logging!
   "Initialize log4j logging from a map.
@@ -320,14 +334,10 @@ example:
        (doseq [{:keys [encoder appender]} configs]
          (when encoder
            (.setContext encoder context)
-           (.start encoder))
-         (let [appender (if (fn? appender)
-                          (appender encoder context)
-                          (doto appender
-                            (.setEncoder encoder)
-                            (.setContext context)))]
-           (.start appender)
-           (.addAppender root appender)))
+           (.start encoder)
+           (.setEncoder appender encoder))
+         (start-appender! appender context)
+         (.addAppender root appender))
 
        (.setLevel root level)
        (doseq [[logger level] overrides
