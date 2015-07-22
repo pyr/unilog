@@ -142,16 +142,14 @@
     (.setMinIndex (int min-index))
     (.setMaxIndex (int max-index))
     (.setParent parent)
-    (.setContext (.getContext parent))
-    (.start)))
+    (.setContext (.getContext parent))))
 
 (defmethod build-rolling-policy :time-based
   [{:keys [file pattern parent] :or {pattern ".%d{yyyy-MM-dd}.gz"}}]
   (doto (TimeBasedRollingPolicy.)
     (.setFileNamePattern (str file pattern))
     (.setParent parent)
-    (.setContext (.getContext parent))
-    (.start)))
+    (.setContext (.getContext parent))))
 
 ;;
 ;; Open dispatch to build a triggering policy for rolling files
@@ -225,23 +223,24 @@
                (.setContext context)
                (.setEncoder encoder)
                (.setRollingPolicy
-                (build-rolling-policy
-                 (merge
-                  {:file file}
-                  (cond
-                    (keyword? rolling-policy)
-                    {:type rolling-policy}
+                (doto (build-rolling-policy
+                       (merge
+                        {:file file}
+                        (cond
+                          (keyword? rolling-policy)
+                          {:type rolling-policy}
 
-                    (string? rolling-policy)
-                    {:type (keyword rolling-policy)}
+                          (string? rolling-policy)
+                          {:type (keyword rolling-policy)}
 
-                    (map? rolling-policy)
-                    (update-in rolling-policy [:type] keyword)
+                          (map? rolling-policy)
+                          (update-in rolling-policy [:type] keyword)
 
-                    :else
-                    (throw (ex-info "invalid rolling policy"
-                                    {:config rolling-policy})))
-                  {:parent appender})))
+                          :else
+                          (throw (ex-info "invalid rolling policy"
+                                          {:config rolling-policy})))
+                        {:parent appender}))
+                  (.start)))
                (.setTriggeringPolicy
                 (build-triggering-policy
                  (merge {:file file}
