@@ -94,7 +94,7 @@ As for `Files`, but do not assume a specific appender, expect it to be supplied 
 
 The following encoders are currently supported:
 
-- `PatternLayoutEncoder`: Using a default pattern of `"%p [%d] %t - %c %m%n"`. Use `:encoder :pattern`.
+- `PatternLayoutEncoder`: Using a default pattern of `"%p [%d] %t - %c%n%m%n"`. Use `:encoder :pattern`.
 - `LogstashEncoder`: If you wish to format messages for logstash. Use `:encoder :json`.
 
 ## Appenders
