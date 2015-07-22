@@ -150,8 +150,10 @@
         pattern (if pattern
                   pattern
                   (if max-size
-                    ".%d{yyyy-MM-dd}.%i.gz"
-                    ".%d{yyyy-MM-dd}.gz"))]
+                    ;; TimeBasedRollingPolicy has a compression issue
+                    ;; http://jira.qos.ch/browse/LOGBACK-992
+                    ".%d{yyyy-MM-dd}.%i"
+                    ".%d{yyyy-MM-dd}"))]
     (if max-size
       (->> (doto (SizeAndTimeBasedFNATP.)
              (.setMaxFileSize (str max-size)))
