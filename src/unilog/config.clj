@@ -19,6 +19,7 @@
            ch.qos.logback.core.FileAppender
            ch.qos.logback.core.OutputStreamAppender
            ch.qos.logback.core.rolling.TimeBasedRollingPolicy
+           ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP
            ch.qos.logback.core.rolling.FixedWindowRollingPolicy
            ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
            ch.qos.logback.core.rolling.RollingFileAppender
@@ -143,9 +144,25 @@
     (.setMaxIndex (int max-index))))
 
 (defmethod build-rolling-policy :time-based
-  [{:keys [file pattern] :or {pattern ".%d{yyyy-MM-dd}.gz"}}]
-  (doto (TimeBasedRollingPolicy.)
-    (.setFileNamePattern (str file pattern))))
+  [{:keys [file pattern max-history max-size]
+    :or {max-history 5}}]
+  (let [tbrp (TimeBasedRollingPolicy.)
+        pattern (if pattern
+                  pattern
+                  (if max-size
+                    ".%d{yyyy-MM-dd}.%i.gz"
+                    ".%d{yyyy-MM-dd}.gz"))]
+    (if max-size
+      (->> (doto (SizeAndTimeBasedFNATP.)
+             (.setMaxFileSize (str max-size)))
+           (.setTimeBasedFileNamingAndTriggeringPolicy tbrp)))
+    (doto tbrp
+      (.setFileNamePattern (str file pattern))
+      (.setMaxHistory max-history))))
+
+(defmethod build-rolling-policy :default
+  [config]
+  (throw (ex-info "Invalid rolling policy" {:config config})))
 
 ;;
 ;; Open dispatch to build a triggering policy for rolling files
