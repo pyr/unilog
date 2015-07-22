@@ -211,50 +211,35 @@
     :or {rolling-policy    :fixed-window
          triggering-policy :size-based}
     :as config}]
-  (let [appender (RollingFileAppender.)]
+  (let [appender (RollingFileAppender.)
+        format-policy (fn [type policy]
+                        (cond
+                          (keyword? policy) {:type policy}
+                          (string? policy) {:type policy}
+                          (map? policy) (update policy :type keyword)
+                          :else
+                          (throw (ex-info (format "invalid %s policy" type)
+                                          {:config policy}))))]
+        rolling-policy (format-policy "rolling" rolling-policy)
     (assoc config :appender
            (fn [encoder context]
+             (when-not (= :time-based (:type rolling-policy))
+               (doto appender
+                 (.setTriggeringPolicy
+                  (doto (build-triggering-policy
+                         (merge {:file file}
+                                (format-policy "triggering"
+                                               triggering-policy)))
+                    (.setContext context)
+                    (.start)))))
              (doto appender
                (.setFile file)
                (.setContext context)
                (.setEncoder encoder)
                (.setRollingPolicy
                 (doto (build-rolling-policy
-                       (merge
-                        {:file file}
-                        (cond
-                          (keyword? rolling-policy)
-                          {:type rolling-policy}
-
-                          (string? rolling-policy)
-                          {:type (keyword rolling-policy)}
-
-                          (map? rolling-policy)
-                          (update-in rolling-policy [:type] keyword)
-
-                          :else
-                          (throw (ex-info "invalid rolling policy"
-                                          {:config rolling-policy})))))
+                       (merge {:file file} rolling-policy))
                   (.setParent appender)
-                  (.setContext context)
-                  (.start)))
-               (.setTriggeringPolicy
-                (doto (build-triggering-policy
-                       (merge {:file file}
-                              (cond
-                                (keyword? triggering-policy)
-                                {:type triggering-policy}
-
-                                (string? triggering-policy)
-                                {:type (keyword triggering-policy)}
-
-                                (map? triggering-policy)
-                                (update-in triggering-policy [:type] keyword)
-
-                                :else
-                                (throw
-                                 (ex-info "invalid triggering policy"
-                                          {:config triggering-policy})))))
                   (.setContext context)
                   (.start))))))))
 
