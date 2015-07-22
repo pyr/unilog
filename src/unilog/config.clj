@@ -213,49 +213,52 @@
                                (SyslogOutputStream. host (int port)))))))
 
 (defmethod build-appender :rolling-file
-  [{:keys [rolling-policy triggering-policy file context]
+  [{:keys [rolling-policy triggering-policy file]
     :or {rolling-policy    :fixed-window
          triggering-policy :size-based}
     :as config}]
   (let [appender (RollingFileAppender.)]
-    (assoc config :appender (doto appender
-                              (.setFile file)
-                              (.setContext context)
-                              (.setRollingPolicy
-                               (build-rolling-policy
-                                (merge
-                                 {:file file}
-                                 (cond
-                                   (keyword? rolling-policy)
-                                   {:type rolling-policy}
+    (assoc config :appender
+           (fn [encoder context]
+             (doto appender
+               (.setFile file)
+               (.setContext context)
+               (.setEncoder encoder)
+               (.setRollingPolicy
+                (build-rolling-policy
+                 (merge
+                  {:file file}
+                  (cond
+                    (keyword? rolling-policy)
+                    {:type rolling-policy}
 
-                                   (string? rolling-policy)
-                                   {:type (keyword rolling-policy)}
+                    (string? rolling-policy)
+                    {:type (keyword rolling-policy)}
 
-                                   (map? rolling-policy)
-                                   (update-in rolling-policy [:type] keyword)
+                    (map? rolling-policy)
+                    (update-in rolling-policy [:type] keyword)
 
-                                   :else
-                                   (throw (ex-info "invalid rolling policy"
-                                                   {:config rolling-policy})))
-                                 {:parent appender})))
-                              (.setTriggeringPolicy
-                               (build-triggering-policy
-                                (merge {:file file}
-                                       (cond
-                                         (keyword? triggering-policy)
-                                         {:type triggering-policy}
+                    :else
+                    (throw (ex-info "invalid rolling policy"
+                                    {:config rolling-policy})))
+                  {:parent appender})))
+               (.setTriggeringPolicy
+                (build-triggering-policy
+                 (merge {:file file}
+                        (cond
+                          (keyword? triggering-policy)
+                          {:type triggering-policy}
 
-                                         (string? triggering-policy)
-                                         {:type (keyword triggering-policy)}
+                          (string? triggering-policy)
+                          {:type (keyword triggering-policy)}
 
-                                         (map? triggering-policy)
-                                         (update-in triggering-policy [:type] keyword)
+                          (map? triggering-policy)
+                          (update-in triggering-policy [:type] keyword)
 
-                                         :else
-                                         (throw
-                                          (ex-info "invalid triggering policy"
-                                                   {:config triggering-policy}))))))))))
+                          :else
+                          (throw
+                           (ex-info "invalid triggering policy"
+                                    {:config triggering-policy})))))))))))
 
 (defmethod build-appender :default
   [val]
@@ -303,12 +306,11 @@ example:
      (let [level   (get levels (some-> level name) Level/INFO)
            root    (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
            context (LoggerFactory/getILoggerFactory)
-           assoc-context (fn [f] (comp f #(assoc % :context context)))
            configs (->> (merge {:console true} config)
                         (map appender-config)
                         (flatten)
                         (remove nil?)
-                        (map (assoc-context build-appender))
+                        (map build-appender)
                         (map build-encoder))]
 
        (.detachAndStopAllAppenders root)
