@@ -273,6 +273,8 @@ If you want to specify arguments for a rolling policy, you can pass a map to `:r
                   ;; for elaborate description of :max-size
                   :max-size    51200 ; bytes
                   ;; :pattern combines with :file
+                  ;; The rolling period is defined by :pattern.
+                  ;; Refer to http://logback.qos.ch/manual/appenders.html#tbrpFileNamePattern
                   :pattern    ".%d{yyyy-MM-dd}.%i"}
  :encoder :pattern
  :pattern "%p [%d] %t - %c%n%m%n"}
