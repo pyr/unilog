@@ -20,7 +20,7 @@ Unilog provides a simple and somewhat opiniated way of configuring
 ## Coordinates
 
 ```clojure
-[spootnik/unilog "0.7.4"]
+[spootnik/unilog "0.7.5"]
 ```
 
 ## Usage
@@ -69,17 +69,23 @@ a number of keys.
 
 If the `:console` key is present in the configuration map, it may be any of:
 
-- `false`: Do not log to the console.
-- `true`: Log to the console, using a pattern encoder and the default pattern.
-- A string: Log to the console, using a pattern encoder and the supplied pattern string.
-- A map: Log to the console, other attributes are taken from the map. For instance: `{:console {:encoder :json}}`.
+* `false`
+  * Do not log to the console.
+* `true`
+  * Log to the console, using a pattern encoder and the default pattern.
+* A string
+  * Log to the console, using a pattern encoder and the supplied pattern string.
+* A map
+  * Log to the console, other attributes are taken from the map.
+  * For instance: `{:console {:encoder :json}}`.
 
 ### File
 
 If the `:file` key is present in the configuration map, it may be any of:
 
-- A string: Log to the provided file, using a pattern encoder and the default pattern.
-- A map: Log to a file, taking configuration attributes from the map. For instance: `{:file {:file "/var/log/foo.log" :encoder :json}}`
+* A string: Log to the provided file, using a pattern encoder and the default pattern.
+* A map: Log to a file, taking configuration attributes from the map.
+  * For instance: `{:file {:file "/var/log/foo.log" :encoder :json}}`
 
 ### Files
 
@@ -99,16 +105,20 @@ As for `Files`, but do not assume a specific appender, expect it to be supplied 
  :appenders [{:appender :file
               :encoder  :json
               :file     "/var/log/other-json.log"}
+
              {:appender :file
               :encoder  :pattern
               :pattern  "%p [%d] %t - %c %m%n"
               :file     "/var/log/other-pattern.log"}
+
              {:appender :rolling-file
               :file     "/var/log/rolling-file.log"}
+
              {:appender :rolling-file
               :rolling-policy :fixed-window
               :triggering-policy :size-based
               :file     "/var/log/rolling-file.log"}
+
              {:appender :rolling-file
               :rolling-policy {:type :fixed-window
                                :max-index 5}
@@ -119,23 +129,22 @@ As for `Files`, but do not assume a specific appender, expect it to be supplied 
 
 ## Encoders
 
-The following encoders are currently supported in `:appenders`
+You could specify encoder arguments in some appenders. Not every appender supports encoders.
+The following encoders are currently supported in `:appenders`.
 
-`PatternLayoutEncoder` uses a default pattern of `"%p [%d] %t - %c%n%m%n"`
+`PatternLayoutEncoder` uses a default pattern of `"%p [%d] %t - %c%n%m%n"`.
 
 ```clojure
 {:appender :file
  :file     "/var/log/file.log"
  ;; PatternLayoutEncoder
- ;; Without :pattern, the default pattern is used.
- :encoder  :pattern
- }
+ ;; Without :pattern argument in an appender config, the default pattern is used.
+ :encoder  :pattern}
 
 {:appender :file
  :file     "/var/log/file2.log"
  :encoder  :pattern
- :pattern  "%p [%d] %t - %c%n%m%n"
- }
+ :pattern  "%p [%d] %t - %c%n%m%n"}
 ```
 
 `LogstashEncoder` formats messages for logstash.
@@ -144,8 +153,7 @@ The following encoders are currently supported in `:appenders`
 {:appender :file
  :file     "/var/log/file3.log"
  ;; LogstashEncoder
- :encoder  :json
- }
+ :encoder  :json}
 ```
 
 ## Appenders
@@ -154,21 +162,48 @@ The following appenders are currently supported:
 
 ### `:console` appender
 
-It has no further arguments.
+* Optional Arguments
+  * `:encoder`
+  * `:pattern`
 
 ```clojure
 {:appender :console}
+
+{:appender :console
+ :encoder  :pattern}
+
+{:appender :console
+ :encoder  :pattern
+ :pattern  "%p [%d] %t - %c%n%m%n"}
+
+{:appender :console
+ :encoder  :json}
 ```
 
 ### `:file` appender
 
 * Mandatory Arguments
   * `:file`
+* Optional Arguments
+  * `:encoder`
+  * `:pattern`
 
 ```clojure
 {:appender :file
+ :file     "/var/log/file.log"}
+
+{:appender :file
  :file     "/var/log/file.log"
- }
+ :encoder  :pattern}
+
+{:appender :file
+ :file     "/var/log/file.log"
+ :encoder  :pattern
+ :pattern  "%p [%d] %t - %c%n%m%n"}
+
+{:appender :file
+ :file     "/var/log/file.log"
+ :encoder  :json}
 ```
 
 ### `:rolling-file` appender
@@ -178,6 +213,8 @@ It has no further arguments.
 * Optional Arguments
   * `:rolling-policy`
   * `:triggering-policy`
+  * `:encoder`
+  * `:pattern`
 
 There are two rolling policies.
 
@@ -190,31 +227,31 @@ Don't use a triggering policy with `:time-based` rolling policy since `:time-bas
 You can specify a rolling policy by the keyword.
 
 ```clojure
-{:appender :rolling-file
+{:appender       :rolling-file
  :rolling-policy :fixed-window
- :file     "/var/log/rolling-file.log"
- }
+ :file           "/var/log/rolling-file.log"
+ :encoder        :pattern}
 
 {:appaneder :rolling-file
  :rolling-policy :time-based
- :file     "/var/log/rolling-file2.log"
- }
+ :file           "/var/log/rolling-file2.log"
+ :encoder        :pattern
+ :pattern        "%p [%d] %t - %c%n%m%n"}
 ```
 
 If you want to specify arguments for a rolling policy, you can pass a map to `:rolling-policy` as below. every argument to a rolling policy except `:type` is optional.
 
 ```clojure
 {:appender :rolling-file
- :file "rolling-file.log"
+ :file           "rolling-file.log"
  :rolling-policy {:type      :fixed-window
                   :min-index 1
                   :max-index 5
                   ;; :pattern combines with :file to make the name of a rolled log file.
                   ;; For example, "rolling-file.log.%i.gz"
                   ;; %i is index.
-                  :pattern  ".%i.gz"
-                  }
- }
+                  :pattern  ".%i.gz"}
+ :encoder        :json}
 
 {:appender :rolling-file
  :file "rolling-file2.log"
@@ -230,9 +267,9 @@ If you want to specify arguments for a rolling policy, you can pass a map to `:r
                   ;; for elaborate description of :max-size
                   :max-size    51200 ; bytes
                   ;; :pattern combines with :file
-                  :pattern    ".%d{yyyy-MM-dd}.%i"
-                  }
- }
+                  :pattern    ".%d{yyyy-MM-dd}.%i"}
+ :encoder :pattern
+ :pattern "%p [%d] %t - %c%n%m%n"}
 ```
 
 There is only one triggering policy, `:size-based`.
@@ -243,17 +280,14 @@ There is only one triggering policy, `:size-based`.
  ;; If you don't pass any argument to :size-based triggering policy, it triggers a rollover
  ;; when a log file grow beyond SizeBasedTriggeringPolicy/DEFAULT_MAX_FILE_SIZE.
  :triggering-policy :size-based
- :file          "rolling-file.log"
- }
+ :file          "rolling-file.log"}
 
 {:appender :rolling-file
  :rolling-policy :fixed-window
  :triggering-policy {:type     :size-base
                      ;; Refer to
                      ;; http://logback.qos.ch/manual/appenders.html#SizeBasedTriggeringPolicy
-                     :max-size 51200 ; bytes
-                     }
- }
+                     :max-size 51200}} ; 51200 bytes
 ```
 
 ### `:socket` appender
@@ -262,7 +296,7 @@ There is only one triggering policy, `:size-based`.
   * `:remote-host`
   * `:port`
   * `:queue-size`
-  * `reconnection-delay`
+  * `:reconnection-delay`
   * `:event-delay-limit`
 
 ```clojure
@@ -271,8 +305,7 @@ There is only one triggering policy, `:size-based`.
  :port                2004
  :queue-size          500
  :reconnection-delay "10 seconds"
- :event-delay-limit  "10 seconds"
- }
+ :event-delay-limit  "10 seconds"}
 ```
 
 ### `:syslog` appender
@@ -284,8 +317,7 @@ There is only one triggering policy, `:size-based`.
 ```clojure
 {:appender :syslog
  :host    "localhost"
- :port     514
- }
+ :port     514}
 ```
 
 ## Extending
