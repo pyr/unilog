@@ -61,9 +61,12 @@ a number of keys.
 
 ### Global Options
 
-- `:level`: Default logging level, any of `debug`, `info`, `warn`, `error`, `all`, `trace`, `off`.
-- `:external`: Do not try to configure logging, an external configuration has been supplied.
-- `:overrides`: Provide a map of namespace to level, overriding the provided default level.
+* `:level`: Default logging level
+  * any of `:debug`, `:info`, `:warn`, `:error`, `:all`, `:trace`, `:off`.
+* `:external`
+  * If it is `true`, do not try to configure logging. An external configuration is supplied.
+* `:overrides`
+  * Provide a map of namespace to level, overriding the provided default level.
 
 ### Console
 
@@ -98,7 +101,8 @@ As for `Files`, but do not assume a specific appender, expect it to be supplied 
 ## Example configuration map
 
 ```clojure
-{:console false
+{:level   :info
+ :console false
  :files ["/var/log/standard.log"
          {:file "/var/log/standard-json.log" :encoder :json}]
  :file {:file "/var/log/file.log" :encoder :json}
@@ -124,7 +128,9 @@ As for `Files`, but do not assume a specific appender, expect it to be supplied 
                                :max-index 5}
               :triggering-policy {:type :size-based
                                   :max-size 5120}
-              :file     "/var/log/rolling-file.log"}]}
+              :file     "/var/log/rolling-file.log"}]
+ :overrides  {"org.apache.http"      :debug
+              "org.apache.http.wire" :error}}
 ```
 
 ## Encoders

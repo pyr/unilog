@@ -32,13 +32,13 @@
 
 (def levels
   "Logging level names to log4j level association"
-  {"debug" Level/DEBUG
-   "info"  Level/INFO
-   "warn"  Level/WARN
-   "error" Level/ERROR
-   "all"   Level/ALL
-   "trace" Level/TRACE
-   "off"   Level/OFF})
+  {:debug Level/DEBUG
+   :info  Level/INFO
+   :warn  Level/WARN
+   :error Level/ERROR
+   :all   Level/ALL
+   :trace Level/TRACE
+   :off   Level/OFF})
 
 (def default-pattern
   "Default pattern for PatternLayoutEncoder"
@@ -319,15 +319,16 @@ example:
   "
   ([{:keys [external level overrides] :as config}]
    (when-not external
-     (let [level   (get levels (some-> level name) Level/INFO)
-           root    (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
-           context (LoggerFactory/getILoggerFactory)
-           configs (->> (merge {:console true} config)
-                        (map appender-config)
-                        (flatten)
-                        (remove nil?)
-                        (map build-appender)
-                        (map build-encoder))]
+     (let [get-level #(get levels % Level/INFO)
+           level     (get-level level)
+           root      (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
+           context   (LoggerFactory/getILoggerFactory)
+           configs   (->> (merge {:console true} config)
+                          (map appender-config)
+                          (flatten)
+                          (remove nil?)
+                          (map build-appender)
+                          (map build-encoder))]
 
        (.detachAndStopAllAppenders root)
 
@@ -342,7 +343,7 @@ example:
        (.setLevel root level)
        (doseq [[logger level] overrides
                :let [logger (LoggerFactory/getLogger (name logger))
-                     level  (get levels level Level/INFO)]]
+                     level  (get-level level)]]
          (.setLevel logger level))
        root)))
   ([]
