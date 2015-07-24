@@ -292,7 +292,7 @@ There is only one triggering policy, `:size-based`.
 
 {:appender :rolling-file
  :rolling-policy :fixed-window
- :triggering-policy {:type     :size-base
+ :triggering-policy {:type     :size-based
                      ;; Refer to
                      ;; http://logback.qos.ch/manual/appenders.html#SizeBasedTriggeringPolicy
                      :max-size 51200}} ; 51200 bytes
