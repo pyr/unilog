@@ -19,6 +19,7 @@
            ch.qos.logback.core.FileAppender
            ch.qos.logback.core.OutputStreamAppender
            ch.qos.logback.core.rolling.TimeBasedRollingPolicy
+           ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP
            ch.qos.logback.core.rolling.FixedWindowRollingPolicy
            ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
            ch.qos.logback.core.rolling.RollingFileAppender
@@ -31,17 +32,17 @@
 
 (def levels
   "Logging level names to log4j level association"
-  {"debug" Level/DEBUG
-   "info"  Level/INFO
-   "warn"  Level/WARN
-   "error" Level/ERROR
-   "all"   Level/ALL
-   "trace" Level/TRACE
-   "off"   Level/OFF})
+  {:debug Level/DEBUG
+   :info  Level/INFO
+   :warn  Level/WARN
+   :error Level/ERROR
+   :all   Level/ALL
+   :trace Level/TRACE
+   :off   Level/OFF})
 
 (def default-pattern
   "Default pattern for PatternLayoutEncoder"
-  "%p [%d] %t - %c %m%n")
+  "%p [%d] %t - %c%n%m%n")
 
 (def default-encoder
   "Default encoder and pattern configuration"
@@ -133,25 +134,37 @@
   :type)
 
 (defmethod build-rolling-policy :fixed-window
-  [{:keys [file pattern max-index min-index parent]
+  [{:keys [file pattern max-index min-index]
     :or {max-index 5
          min-index 1
          pattern ".%i.gz"}}]
   (doto (FixedWindowRollingPolicy.)
     (.setFileNamePattern (str file pattern))
     (.setMinIndex (int min-index))
-    (.setMaxIndex (int max-index))
-    (.setParent parent)
-    (.setContext (.getContext parent))
-    (.start)))
+    (.setMaxIndex (int max-index))))
 
 (defmethod build-rolling-policy :time-based
-  [{:keys [file pattern parent] :or {pattern ".%d{yyyy-MM-dd}.gz"}}]
-  (doto (TimeBasedRollingPolicy.)
-    (.setFileNamePattern (str file pattern))
-    (.setParent parent)
-    (.setContext (.getContext parent))
-    (.start)))
+  [{:keys [file pattern max-history max-size]
+    :or {max-history 5}}]
+  (let [tbrp (TimeBasedRollingPolicy.)
+        pattern (if pattern
+                  pattern
+                  (if max-size
+                    ;; TimeBasedRollingPolicy has a compression issue
+                    ;; http://jira.qos.ch/browse/LOGBACK-992
+                    ".%d{yyyy-MM-dd}.%i"
+                    ".%d{yyyy-MM-dd}"))]
+    (if max-size
+      (->> (doto (SizeAndTimeBasedFNATP.)
+             (.setMaxFileSize (str max-size)))
+           (.setTimeBasedFileNamingAndTriggeringPolicy tbrp)))
+    (doto tbrp
+      (.setFileNamePattern (str file pattern))
+      (.setMaxHistory max-history))))
+
+(defmethod build-rolling-policy :default
+  [config]
+  (throw (ex-info "Invalid rolling policy" {:config config})))
 
 ;;
 ;; Open dispatch to build a triggering policy for rolling files
@@ -205,61 +218,67 @@
 
 (defmethod build-appender :syslog
   [{:keys [host port] :or {host "localhost" port 514} :as config}]
-  (assoc config :appender (fn [encoder context]
-                            (doto (OutputStreamAppender.)
-                              (.setContext context)
-                              (.setEncoder encoder)
-                              (.setOutputStream
-                               (SyslogOutputStream. host (int port)))))))
+  (assoc config :appender (doto (OutputStreamAppender.)
+                            (.setOutputStream
+                             (SyslogOutputStream. host (int port))))))
 
 (defmethod build-appender :rolling-file
-  [{:keys [rolling-policy triggering-policy file context]
+  [{:keys [rolling-policy triggering-policy file]
     :or {rolling-policy    :fixed-window
          triggering-policy :size-based}
     :as config}]
-  (let [appender (RollingFileAppender.)]
-    (assoc config :appender (doto appender
-                              (.setFile file)
-                              (.setContext context)
-                              (.setRollingPolicy
-                               (build-rolling-policy
-                                (merge
-                                 {:file file}
-                                 (cond
-                                   (keyword? rolling-policy)
-                                   {:type rolling-policy}
-
-                                   (string? rolling-policy)
-                                   {:type (keyword rolling-policy)}
-
-                                   (map? rolling-policy)
-                                   (update-in rolling-policy [:type] keyword)
-
-                                   :else
-                                   (throw (ex-info "invalid rolling policy"
-                                                   {:config rolling-policy})))
-                                 {:parent appender})))
-                              (.setTriggeringPolicy
-                               (build-triggering-policy
-                                (merge {:file file}
-                                       (cond
-                                         (keyword? triggering-policy)
-                                         {:type triggering-policy}
-
-                                         (string? triggering-policy)
-                                         {:type (keyword triggering-policy)}
-
-                                         (map? triggering-policy)
-                                         (update-in triggering-policy [:type] keyword)
-
-                                         :else
-                                         (throw
-                                          (ex-info "invalid triggering policy"
-                                                   {:config triggering-policy}))))))))))
+  (let [appender (RollingFileAppender.)
+        format-policy (fn [type policy]
+                        (cond
+                          (keyword? policy) {:type policy}
+                          (string? policy) {:type policy}
+                          (map? policy) (update policy :type keyword)
+                          :else
+                          (throw (ex-info (format "invalid %s policy" type)
+                                          {:config policy}))))
+        format-policy (comp #(assoc % :file file) format-policy)
+        rolling-policy (format-policy "rolling" rolling-policy)
+        triggering-policy (format-policy "triggering" triggering-policy)]
+    (.setFile appender file)
+    (when-not (= :time-based (:type rolling-policy))
+      (.setTriggeringPolicy appender
+                            (build-triggering-policy triggering-policy)))
+    (.setRollingPolicy appender (build-rolling-policy rolling-policy))
+    (assoc config :appender appender)))
 
 (defmethod build-appender :default
   [val]
   (throw (ex-info "invalid log appender configuration" {:config val})))
+
+;;; start-appender!
+;;; =======================================
+(defmulti start-appender!
+  "Start an appender according to appender type"
+  (fn [appender context]
+    (type appender)))
+
+(defmethod start-appender! ch.qos.logback.core.rolling.RollingFileAppender
+  [appender context]
+  ;; The order of operations is important. If you change it, errors will occur.
+  (.setContext appender context)
+  (doto (.getRollingPolicy appender)
+    (.setParent appender)
+    (.setContext context)
+    (.start))
+  (when-let [tp (.getTriggeringPolicy appender)]
+    ;; Since TimeBasedRollingPolicy can serve as a triggering policy,
+    ;; start triggering policy only if it is not started already.
+    (if-not (.isStarted tp)
+      (doto tp
+        (.setContext context)
+        (.start))))
+  (.start appender))
+
+(defmethod start-appender! :default
+  [appender context]
+  (doto appender
+    (.setContext context)
+    (.start)))
 
 (defn start-logging!
   "Initialize log4j logging from a map.
@@ -300,35 +319,31 @@ example:
   "
   ([{:keys [external level overrides] :as config}]
    (when-not external
-     (let [level   (get levels (some-> level name) Level/INFO)
-           root    (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
-           context (LoggerFactory/getILoggerFactory)
-           assoc-context (fn [f] (comp f #(assoc % :context context)))
-           configs (->> (merge {:console true} config)
-                        (map appender-config)
-                        (flatten)
-                        (remove nil?)
-                        (map (assoc-context build-appender))
-                        (map build-encoder))]
+     (let [get-level #(get levels % Level/INFO)
+           level     (get-level level)
+           root      (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
+           context   (LoggerFactory/getILoggerFactory)
+           configs   (->> (merge {:console true} config)
+                          (map appender-config)
+                          (flatten)
+                          (remove nil?)
+                          (map build-appender)
+                          (map build-encoder))]
 
        (.detachAndStopAllAppenders root)
 
        (doseq [{:keys [encoder appender]} configs]
          (when encoder
            (.setContext encoder context)
-           (.start encoder))
-         (let [appender (if (fn? appender)
-                          (appender encoder context)
-                          (doto appender
-                            (.setEncoder encoder)
-                            (.setContext context)))]
-           (.start appender)
-           (.addAppender root appender)))
+           (.start encoder)
+           (.setEncoder appender encoder))
+         (start-appender! appender context)
+         (.addAppender root appender))
 
        (.setLevel root level)
        (doseq [[logger level] overrides
                :let [logger (LoggerFactory/getLogger (name logger))
-                     level  (get levels level Level/INFO)]]
+                     level  (get-level level)]]
          (.setLevel logger level))
        root)))
   ([]
