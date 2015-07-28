@@ -238,7 +238,7 @@ You can specify a rolling policy by the keyword.
  :file           "/var/log/rolling-file.log"
  :encoder        :pattern}
 
-{:appaneder :rolling-file
+{:appender :rolling-file
  :rolling-policy :time-based
  :file           "/var/log/rolling-file2.log"
  :encoder        :pattern
