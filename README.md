@@ -138,7 +138,7 @@ As for `Files`, but do not assume a specific appender, expect it to be supplied 
 You could specify encoder arguments in some appenders. Not every appender supports encoders.
 The following encoders are currently supported in `:appenders`.
 
-`PatternLayoutEncoder` uses a default pattern of `"%p [%d] %t - %c%n%m%n"`.
+`PatternLayoutEncoder` uses a default pattern of `"%p [%d] %t - %c %m%n"`.
 
 ```clojure
 {:appender :file
@@ -150,7 +150,7 @@ The following encoders are currently supported in `:appenders`.
 {:appender :file
  :file     "/var/log/file2.log"
  :encoder  :pattern
- :pattern  "%p [%d] %t - %c%n%m%n"}
+ :pattern  "%p [%d] %t - %c %m%n"}
 ```
 
 `LogstashEncoder` formats messages for logstash.
@@ -180,7 +180,7 @@ The following appenders are currently supported:
 
 {:appender :console
  :encoder  :pattern
- :pattern  "%p [%d] %t - %c%n%m%n"}
+ :pattern  "%p [%d] %t - %c %m%n"}
 
 {:appender :console
  :encoder  :json}
@@ -205,7 +205,7 @@ The following appenders are currently supported:
 {:appender :file
  :file     "/var/log/file.log"
  :encoder  :pattern
- :pattern  "%p [%d] %t - %c%n%m%n"}
+ :pattern  "%p [%d] %t - %c %m%n"}
 
 {:appender :file
  :file     "/var/log/file.log"
@@ -242,7 +242,7 @@ You can specify a rolling policy by the keyword.
  :rolling-policy :time-based
  :file           "/var/log/rolling-file2.log"
  :encoder        :pattern
- :pattern        "%p [%d] %t - %c%n%m%n"}
+ :pattern        "%p [%d] %t - %c %m%n"}
 ```
 
 If you want to specify arguments for a rolling policy, you can pass a map to `:rolling-policy` as below. every argument to a rolling policy except `:type` is optional.
@@ -277,7 +277,7 @@ If you want to specify arguments for a rolling policy, you can pass a map to `:r
                   ;; Refer to http://logback.qos.ch/manual/appenders.html#tbrpFileNamePattern
                   :pattern    ".%d{yyyy-MM-dd}.%i"}
  :encoder :pattern
- :pattern "%p [%d] %t - %c%n%m%n"}
+ :pattern "%p [%d] %t - %c %m%n"}
 ```
 
 There is only one triggering policy, `:size-based`.

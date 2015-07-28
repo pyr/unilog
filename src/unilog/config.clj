@@ -42,7 +42,7 @@
 
 (def default-pattern
   "Default pattern for PatternLayoutEncoder"
-  "%p [%d] %t - %c%n%m%n")
+  "%p [%d] %t - %c %m%n")
 
 (def default-encoder
   "Default encoder and pattern configuration"
