@@ -320,7 +320,7 @@ example:
   "
   ([{:keys [external level overrides] :as config}]
    (when-not external
-     (let [get-level #(get levels % Level/INFO)
+     (let [get-level #(get levels (some-> % keyword) Level/INFO)
            level     (get-level level)
            root      (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
            context   (LoggerFactory/getILoggerFactory)
