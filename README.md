@@ -20,7 +20,7 @@ Unilog provides a simple and somewhat opiniated way of configuring
 ## Coordinates
 
 ```clojure
-[spootnik/unilog "0.7.7"]
+[spootnik/unilog "0.7.8"]
 ```
 
 ## Usage
@@ -62,7 +62,7 @@ a number of keys.
 ### Global Options
 
 * `:level`: Default logging level
-  * any of `:all`, `:trace`, `:debug`, `:info`, `:warn`, `:error`, `:fatal`, `:off`
+  * any of `:all`, `:trace`, `:debug`, `:info`, `:warn`, `:error`, `:off`
 * `:external`
   * If it is `true`, do not try to configure logging. An external configuration is supplied.
 * `:overrides`
