@@ -38,7 +38,6 @@
    :info  Level/INFO
    :warn  Level/WARN
    :error Level/ERROR
-   :fatal Level/FATAL
    :off   Level/OFF})
 
 (def default-pattern
