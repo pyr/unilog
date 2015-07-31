@@ -1,5 +1,8 @@
 # unilog: logging should be easy!
 
+[![Build Status](https://secure.travis-ci.org/pyr/unilog.png)](http://travis-ci.org/pyr/unilog)
+
+
 [clojure.tools.logging](https://github.com/clojure/tools.logging) is
 a great library to perform logging. It walks through several available
 options such as [slf4j](http://www.slf4j.org),
