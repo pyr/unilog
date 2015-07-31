@@ -62,7 +62,7 @@ a number of keys.
 ### Global Options
 
 * `:level`: Default logging level
-  * any of `:debug`, `:info`, `:warn`, `:error`, `:all`, `:trace`, `:off`.
+  * any of `:all`, `:trace`, `:debug`, `:info`, `:warn`, `:error`, `:fatal`, `:off`
 * `:external`
   * If it is `true`, do not try to configure logging. An external configuration is supplied.
 * `:overrides`

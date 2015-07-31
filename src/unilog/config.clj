@@ -32,12 +32,13 @@
 
 (def levels
   "Logging level names to log4j level association"
-  {:debug Level/DEBUG
+  {:all   Level/ALL
+   :trace Level/TRACE
+   :debug Level/DEBUG
    :info  Level/INFO
    :warn  Level/WARN
    :error Level/ERROR
-   :all   Level/ALL
-   :trace Level/TRACE
+   :fatal Level/FATAL
    :off   Level/OFF})
 
 (def default-pattern
