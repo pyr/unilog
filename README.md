@@ -23,7 +23,7 @@ Unilog provides a simple and somewhat opiniated way of configuring
 ## Coordinates
 
 ```clojure
-[spootnik/unilog "0.7.8"]
+[spootnik/unilog "0.7.9"]
 ```
 
 ## Usage
