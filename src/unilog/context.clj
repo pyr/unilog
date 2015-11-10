@@ -22,5 +22,5 @@
          (push-context k# v#))
        ~@body
        (finally
-         (doseq [[k# _] ~ctx]
+         (doseq [[k# _#] ~ctx]
            (pull-context k#))))))
