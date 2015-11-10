@@ -1,4 +1,4 @@
-(defproject spootnik/unilog "0.7.10"
+(defproject spootnik/unilog "0.7.11"
   :description "logging should be easy!"
   :url "https://github.com/pyr/unilog"
   :license {:name "MIT License"
