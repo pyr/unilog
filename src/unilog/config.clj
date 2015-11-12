@@ -232,7 +232,7 @@
                         (cond
                           (keyword? policy) {:type policy}
                           (string? policy) {:type policy}
-                          (map? policy) (update policy :type keyword)
+                          (map? policy) (update policy [:type] keyword)
                           :else
                           (throw (ex-info (format "invalid %s policy" type)
                                           {:config policy}))))
