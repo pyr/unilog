@@ -31,7 +31,7 @@
 ;; =======================
 
 (def levels
-  "Logging level names to log4j level association"
+  "Logging level names to logback level association"
   {:all   Level/ALL
    :trace Level/TRACE
    :debug Level/DEBUG
@@ -281,7 +281,7 @@
     (.start)))
 
 (defn start-logging!
-  "Initialize log4j logging from a map.
+  "Initialize logback logging from a map.
 
    The map accepts the following keys as keywords
    - `:level`: Default level at which to log.
