@@ -49,6 +49,14 @@
   {:encoder :pattern
    :pattern  default-pattern})
 
+(def default-configuration
+  "A simple default logging configuration"
+  {:pattern "%p [%d] %t - %c - %m%n"
+   :external false
+   :console true
+   :files  []
+   :level  "info"})
+
 
 ;; Open dispatch method to build appender configuration
 ;; ====================================================
@@ -317,34 +325,36 @@ example:
  :overrides {\"some.namespace\" \"debug\"}}
 ```
   "
-  ([{:keys [external level overrides] :as config}]
-   (when-not external
-     (let [get-level #(get levels (some-> % keyword) Level/INFO)
-           level     (get-level level)
-           root      (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
-           context   (LoggerFactory/getILoggerFactory)
-           configs   (->> (merge {:console true} config)
-                          (map appender-config)
-                          (flatten)
-                          (remove nil?)
-                          (map build-appender)
-                          (map build-encoder))]
+  ([raw-config]
+   (let [config (merge default-configuration raw-config)
+         {:keys [external level overrides]} config]
+     (when-not external
+       (let [get-level #(get levels (some-> % keyword) Level/INFO)
+             level     (get-level level)
+             root      (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
+             context   (LoggerFactory/getILoggerFactory)
+             configs   (->> (merge {:console true} config)
+                            (map appender-config)
+                            (flatten)
+                            (remove nil?)
+                            (map build-appender)
+                            (map build-encoder))]
 
-       (.detachAndStopAllAppenders root)
+         (.detachAndStopAllAppenders root)
 
-       (doseq [{:keys [encoder appender]} configs]
-         (when encoder
-           (.setContext encoder context)
-           (.start encoder)
-           (.setEncoder appender encoder))
-         (start-appender! appender context)
-         (.addAppender root appender))
+         (doseq [{:keys [encoder appender]} configs]
+           (when encoder
+             (.setContext encoder context)
+             (.start encoder)
+             (.setEncoder appender encoder))
+           (start-appender! appender context)
+           (.addAppender root appender))
 
-       (.setLevel root level)
-       (doseq [[logger level] overrides
-               :let [logger (LoggerFactory/getLogger (name logger))
-                     level  (get-level level)]]
-         (.setLevel logger level))
-       root)))
+         (.setLevel root level)
+         (doseq [[logger level] overrides
+                 :let [logger (LoggerFactory/getLogger (name logger))
+                       level  (get-level level)]]
+           (.setLevel logger level))
+         root))))
   ([]
-   (start-logging! {})))
+   (start-logging! default-configuration)))
