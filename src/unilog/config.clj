@@ -10,6 +10,7 @@
    Two extension mechanism are provided to add support for more appenders and encoders,
    see `build-appender` and `build-encoder` respectively"
   (:import org.slf4j.LoggerFactory
+           org.slf4j.bridge.SLF4JBridgeHandler
            ch.qos.logback.classic.net.SocketAppender
            ch.qos.logback.classic.encoder.PatternLayoutEncoder
            ch.qos.logback.classic.Logger
@@ -329,6 +330,8 @@ example:
    (let [config (merge default-configuration raw-config)
          {:keys [external level overrides]} config]
      (when-not external
+       (SLF4JBridgeHandler/removeHandlersForRootLogger)
+       (SLF4JBridgeHandler/install)
        (let [get-level #(get levels (some-> % keyword) Level/INFO)
              level     (get-level level)
              root      (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
