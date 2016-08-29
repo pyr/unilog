@@ -346,6 +346,12 @@ You may need to add a multimethod for `start-appender!` if your appender needs a
 
 Full API documentation is available at http://pyr.github.io/unilog
 
+## Releases
+
+### 0.7.15 
+
+- Coda Hale (https://github.com/codahale) added a `java.util.logging` bridge for applications relying on this logging method.
+
 ## License
 
 Copyright © 2014 Pierre-Yves Ritschard <pyr@spootnik.org>
