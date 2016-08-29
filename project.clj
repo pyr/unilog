@@ -4,7 +4,8 @@
   :license {:name "MIT License"
             :url "https://github.com/pyr/unilog/tree/master/LICENSE"}
   :plugins [[lein-codox "0.10.2"]]
-  :codox {:defaults {:doc/format :markdown}}
+  :codox {:source-uri "https://github.com/pyr/unilog/blob/{version}/{filepath}#L{line}"
+          :metadata   {:doc/format :markdown}}
   :dependencies [[org.clojure/clojure                           "1.8.0"]
                  [net.logstash.logback/logstash-logback-encoder "4.8"]
                  [org.slf4j/slf4j-api                           "1.7.22"]
