@@ -3,7 +3,7 @@
   :url "https://github.com/pyr/unilog"
   :license {:name "MIT License"
             :url "https://github.com/pyr/unilog/tree/master/LICENSE"}
-  :plugins [[codox "0.9.6"]]
+  :plugins [[lein-codox "0.9.6"]]
   :codox {:defaults {:doc/format :markdown}}
   :dependencies [[org.clojure/clojure                           "1.8.0"]
                  [net.logstash.logback/logstash-logback-encoder "4.7"]
