@@ -25,6 +25,7 @@
            ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
            ch.qos.logback.core.rolling.RollingFileAppender
            ch.qos.logback.core.util.Duration
+           ch.qos.logback.core.util.FileSize
            ch.qos.logback.core.net.SyslogOutputStream
            net.logstash.logback.encoder.LogstashEncoder))
 
@@ -187,7 +188,8 @@
 (defmethod build-triggering-policy :size-based
   [{:keys [max-size]
     :or {max-size SizeBasedTriggeringPolicy/DEFAULT_MAX_FILE_SIZE}}]
-  (SizeBasedTriggeringPolicy. (str max-size)))
+  (doto (SizeBasedTriggeringPolicy.)
+    (.setMaxFileSize (FileSize/valueOf (str max-size)))))
 
 ;; Open dispatch method to build appenders
 ;; =======================================
