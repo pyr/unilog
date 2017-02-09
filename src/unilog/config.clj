@@ -14,8 +14,15 @@
            ch.qos.logback.classic.net.SocketAppender
            ch.qos.logback.classic.encoder.PatternLayoutEncoder
            ch.qos.logback.classic.Logger
+           ch.qos.logback.classic.LoggerContext
            ch.qos.logback.classic.BasicConfigurator
            ch.qos.logback.classic.Level
+           ch.qos.logback.core.spi.ContextAware
+           ch.qos.logback.core.rolling.TriggeringPolicy
+           ch.qos.logback.core.rolling.RollingPolicy
+           ch.qos.logback.core.spi.LifeCycle
+           ch.qos.logback.core.Appender
+           ch.qos.logback.core.encoder.Encoder
            ch.qos.logback.core.ConsoleAppender
            ch.qos.logback.core.FileAppender
            ch.qos.logback.core.OutputStreamAppender
@@ -268,28 +275,27 @@
   (fn [appender context]
     (type appender)))
 
-(defmethod start-appender! ch.qos.logback.core.rolling.RollingFileAppender
-  [appender context]
+(defmethod start-appender! RollingFileAppender
+  [^RollingFileAppender appender ^LoggerContext context]
   ;; The order of operations is important. If you change it, errors will occur.
   (.setContext appender context)
-  (doto (.getRollingPolicy appender)
+  (doto ^RollingPolicy (.getRollingPolicy appender)
     (.setParent appender)
-    (.setContext context)
     (.start))
-  (when-let [tp (.getTriggeringPolicy appender)]
+  (when-let [tp ^TriggeringPolicy (.getTriggeringPolicy appender)]
     ;; Since TimeBasedRollingPolicy can serve as a triggering policy,
     ;; start triggering policy only if it is not started already.
-    (if-not (.isStarted tp)
-      (doto tp
-        (.setContext context)
-        (.start))))
+    (when-not (.isStarted tp)
+      (when (instance? ContextAware tp)
+        (.setContext ^ContextAware tp context))
+      (.start tp)))
   (.start appender))
 
 (defmethod start-appender! :default
   [appender context]
-  (doto appender
-    (.setContext context)
-    (.start)))
+  (.setContext ^ContextAware appender ^LoggerContext context)
+  (.start ^LifeCycle appender)
+  appender)
 
 (defn start-logging!
   "Initialize logback logging from a map.
@@ -335,9 +341,9 @@ example:
        (SLF4JBridgeHandler/removeHandlersForRootLogger)
        (SLF4JBridgeHandler/install)
        (let [get-level #(get levels (some-> % keyword) Level/INFO)
-             level     (get-level level)
-             root      (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
-             context   (LoggerFactory/getILoggerFactory)
+             level     ^Level (get-level level)
+             root      ^Logger (LoggerFactory/getLogger Logger/ROOT_LOGGER_NAME)
+             context   ^LoggerContext (LoggerFactory/getILoggerFactory)
              configs   (->> (merge {:console true} config)
                             (map appender-config)
                             (flatten)
@@ -347,19 +353,19 @@ example:
 
          (.detachAndStopAllAppenders root)
 
-         (doseq [{:keys [encoder appender]} configs]
-           (when encoder
+         (doseq [{:keys [^Encoder encoder ^Appender appender]} configs]
+           (when (and (instance? OutputStreamAppender appender) encoder)
              (.setContext encoder context)
              (.start encoder)
-             (.setEncoder appender encoder))
+             (.setEncoder ^OutputStreamAppender appender encoder))
            (start-appender! appender context)
            (.addAppender root appender))
 
          (.setLevel root level)
-         (doseq [[logger level] overrides
-                 :let [logger (LoggerFactory/getLogger (name logger))
+         (doseq [[logger-name level] overrides
+                 :let [logger (LoggerFactory/getLogger (name logger-name))
                        level  (get-level level)]]
-           (.setLevel logger level))
+           (.setLevel ^Logger logger ^Level level))
          root))))
   ([]
    (start-logging! default-configuration)))
