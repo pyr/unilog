@@ -33,8 +33,8 @@
            ch.qos.logback.core.rolling.RollingFileAppender
            ch.qos.logback.core.util.Duration
            ch.qos.logback.core.util.FileSize
-           ch.qos.logback.core.net.SyslogOutputStream
-           net.logstash.logback.encoder.LogstashEncoder))
+           ch.qos.logback.core.net.SyslogOutputStream)
+  (:require [unilog.encoder.json :as json]))
 
 ;; Configuration constants
 ;; =======================
@@ -133,7 +133,7 @@
 
 (defmethod build-encoder :json
   [config]
-  (assoc config :encoder (LogstashEncoder.)))
+  (assoc config :encoder (json/make-encoder)))
 
 (defmethod build-encoder :default
   [{:keys [appender] :as config}]

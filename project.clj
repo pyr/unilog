@@ -7,7 +7,8 @@
   :codox {:source-uri "https://github.com/pyr/unilog/blob/{version}/{filepath}#L{line}"
           :metadata   {:doc/format :markdown}}
   :dependencies [[org.clojure/clojure                           "1.8.0"]
-                 [net.logstash.logback/logstash-logback-encoder "4.8"]
+                 [cheshire                                      "5.7.0"]
+                 [clj-time                                      "0.13.0"]
                  [org.slf4j/slf4j-api                           "1.7.22"]
                  [org.slf4j/log4j-over-slf4j                    "1.7.22"]
                  [org.slf4j/jul-to-slf4j                        "1.7.22"]
