@@ -11,7 +11,8 @@
                  [org.slf4j/slf4j-api                           "1.7.22"]
                  [org.slf4j/log4j-over-slf4j                    "1.7.22"]
                  [org.slf4j/jul-to-slf4j                        "1.7.22"]
-                 [ch.qos.logback/logback-classic                "1.2.0"]
-                 [ch.qos.logback/logback-core                   "1.2.0"]]
-  :profiles {:dev {:dependencies [[org.clojure/tools.logging "0.3.1"]]
+                 [ch.qos.logback/logback-classic                "1.1.8"]
+                 [ch.qos.logback/logback-core                   "1.1.8"]]
+  :profiles {:dev {:dependencies [[org.clojure/tools.logging "0.3.1"]
+                                  [cheshire                  "5.7.0"]]
                    :global-vars {*warn-on-reflection* true}}})
