@@ -14,5 +14,6 @@
                  [ch.qos.logback/logback-classic                "1.1.8"]
                  [ch.qos.logback/logback-core                   "1.1.8"]]
   :profiles {:dev {:dependencies [[org.clojure/tools.logging "0.3.1"]
-                                  [cheshire                  "5.7.0"]]
+                                  [cheshire                  "5.7.0"]
+                                  [clj-time                  "0.13.0"]]
                    :global-vars {*warn-on-reflection* true}}})
