@@ -171,9 +171,9 @@
                     ;; http://jira.qos.ch/browse/LOGBACK-992
                     ".%d{yyyy-MM-dd}.%i"
                     ".%d{yyyy-MM-dd}"))]
-    (if max-size
+    (when max-size
       (->> (doto (SizeAndTimeBasedFNATP.)
-             (.setMaxFileSize (str max-size)))
+             (.setMaxFileSize (FileSize/valueOf (str max-size))))
            (.setTimeBasedFileNamingAndTriggeringPolicy tbrp)))
     (doto tbrp
       (.setFileNamePattern (str file pattern))
