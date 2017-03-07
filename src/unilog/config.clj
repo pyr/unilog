@@ -279,9 +279,11 @@
   [^RollingFileAppender appender ^LoggerContext context]
   ;; The order of operations is important. If you change it, errors will occur.
   (.setContext appender context)
-  (doto ^RollingPolicy (.getRollingPolicy appender)
-    (.setParent appender)
-    (.start))
+  (let [^RollingPolicy rp (.getRollingPolicy appender)]
+    (.setParent rp  appender)
+    (when (instance? ContextAware rp)
+      (.setContext ^ContextAware rp context))
+    (.start rp))
   (when-let [tp ^TriggeringPolicy (.getTriggeringPolicy appender)]
     ;; Since TimeBasedRollingPolicy can serve as a triggering policy,
     ;; start triggering policy only if it is not started already.
