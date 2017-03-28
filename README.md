@@ -23,7 +23,7 @@ Unilog provides a simple and somewhat opiniated way of configuring
 ## Coordinates
 
 ```clojure
-[spootnik/unilog "0.7.19"]
+[spootnik/unilog "0.7.20"]
 ```
 
 ## Usage
@@ -347,6 +347,10 @@ You may need to add a multimethod for `start-appender!` if your appender needs a
 Full API documentation is available at http://pyr.github.io/unilog
 
 ## Releases
+
+### 0.7.20
+
+- Upgrade to logback 1.2.0
 
 ### 0.7.19
 
