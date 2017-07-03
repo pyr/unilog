@@ -348,6 +348,10 @@ Full API documentation is available at http://pyr.github.io/unilog
 
 ## Releases
 
+### 0.7.21
+
+- Dependency upgrades
+
 ### 0.7.20
 
 - Upgrade to logback 1.2.0
