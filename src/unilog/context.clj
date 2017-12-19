@@ -15,9 +15,9 @@
   "Execute body with the Mapped Diagnostic Context updated from
    keys found in the ctx map."
   [ctx & body]
-  `(if-not (map? ~ctx)
-     (throw (ex-info "with-context expects a map" {}))
-     (try
+  (if-not (map? ctx)
+    (throw (ex-info "with-context expects a map" {}))
+    `(try
        (doseq [[k# v#] ~ctx ]
          (push-context k# v#))
        ~@body

@@ -6,7 +6,7 @@
             [clojure.java.io       :refer [reader]]
             [clojure.tools.logging :refer [debug info warn error]]
             [clj-time.format       :refer [parse formatters]]
-            [clj-time.core         :refer [now within? minus seconds]]))
+            [clj-time.core         :refer [interval now within? minus seconds]]))
 
 (defn- temp-file
   "Temp file which gets deleted when the JVM stops"
@@ -22,8 +22,10 @@
 
 (defn- check-interval
   [date-str]
-  (let [dt (parse date-str)]
-    (within? (minus (now) (seconds 5)) dt (now))))
+  (let [dt (parse date-str)
+        floor (minus (now) (seconds 5))
+        correct-band (interval floor (now))]
+    (within? correct-band dt)))
 
 (def ^:private get-version (keyword "@version"))
 (def ^:private get-timestamp (keyword "@timestamp"))
@@ -55,7 +57,7 @@
       (error "error")
 
       (let [records (parse-lines path)]
-        (every? true? (map (comp check-interval get-timestamp) records))
+        (is (every? true? (map (comp check-interval get-timestamp) records)))
         (is (= #{"unilog.config-test"} (reduce conj #{} (map :logger_name records))))
         (is (= #{"main"} (reduce conj #{} (map :thread_name records))))
         (is (= #{1} (reduce conj #{} (map get-version records))))
@@ -76,7 +78,7 @@
         (error "error")
 
         (let [records (parse-lines path)]
-          (every? true? (map (comp check-interval get-timestamp) records))
+          (is (every? true? (map (comp check-interval get-timestamp) records)))
           (is (= #{"unilog.config-test"} (reduce conj #{} (map :logger_name records))))
           (is (= #{"main"} (reduce conj #{} (map :thread_name records))))
           (is (= #{1} (reduce conj #{} (map get-version records))))
