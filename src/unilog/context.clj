@@ -24,3 +24,26 @@
        (finally
          (doseq [[k# _#] ~ctx]
            (pull-context k#))))))
+
+(defn mdc-fn*
+  [f]
+  (let [mdc (org.slf4j.MDC/getCopyOfContextMap)]
+    (fn [& args]
+      (when (some? mdc)
+        (org.slf4j.MDC/setContextMap mdc))
+      (apply f args))))
+
+(defmacro mdc-fn
+  [& fntail]
+  `(mdc-fn* (fn ~@fntail)))
+
+
+(comment
+
+  ;; Example usage, you'll need a pattern that shows MDC values
+
+  (require '[clojure.tools.logging :refer [info]])
+
+  (let [f (mdc-fn [] (with-context {:mdcval "bar"} (info "something")))]
+    @(future
+       (f))))
