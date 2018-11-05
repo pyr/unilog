@@ -24,3 +24,15 @@
        (finally
          (doseq [[k# _#] ~ctx]
            (pull-context k#))))))
+
+(defn mdc-bound-fn*
+  [f]
+  (let [mdc (MDC/getCopyOfContextMap)]
+    (bound-fn*
+     (fn []
+       (MDC/setContextMap mdc)
+       (f)))))
+
+(defmacro mdc-bound-fn
+  [& body]
+  (mdc-bound-fn* (fn [] ~@body)))
