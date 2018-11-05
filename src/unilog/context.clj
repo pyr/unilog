@@ -25,14 +25,24 @@
          (doseq [[k# _#] ~ctx]
            (pull-context k#))))))
 
-(defn mdc-bound-fn*
+(defn mdc-fn*
   [f]
-  (let [mdc (MDC/getCopyOfContextMap)]
-    (bound-fn*
-     (fn []
-       (MDC/setContextMap mdc)
-       (f)))))
+  (let [mdc (org.slf4j.MDC/getCopyOfContextMap)]
+    (fn [& args]
+      (when (some? mdc)
+        (org.slf4j.MDC/setContextMap mdc))
+      (apply f args))))
 
-(defmacro mdc-bound-fn
-  [& body]
-  (mdc-bound-fn* (fn [] ~@body)))
+(defmacro mdc-fn
+  [& fntail]
+  `(mdc-fn* (fn ~@fntail)))
+
+
+(comment
+
+  ;; Example usage
+
+  (require '[clojure.tools.logging :refer [info]])
+  (let [f (mdc-fn [] (with-context {:mdcval "bar"} (info "something")))]
+    @(future
+       (f))))
