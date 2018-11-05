@@ -26,6 +26,10 @@
            (pull-context k#))))))
 
 (defn mdc-fn*
+  "Returns a function, which will install the same MDC context map in effect as in
+  the thread at the time mdc-fn* was called and then call f with any given
+  arguments. This may be used to define a helper function which runs on a
+  different thread, but needs to preserve the MDC context."
   [f]
   (let [mdc (org.slf4j.MDC/getCopyOfContextMap)]
     (fn [& args]
@@ -34,9 +38,12 @@
       (apply f args))))
 
 (defmacro mdc-fn
+  "Returns a function defined by the given fntail, which will install the
+  same MDC context map in effect as in the thread at the time mdc-fn was called.
+  This may be used to define a helper function which runs on a different
+  thread, but needs to preserve the MDC context."
   [& fntail]
   `(mdc-fn* (fn ~@fntail)))
-
 
 (comment
 
