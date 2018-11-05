@@ -23,7 +23,7 @@ Unilog provides a simple and somewhat opiniated way of configuring
 ## Coordinates
 
 ```clojure
-[spootnik/unilog "0.7.23"]
+[spootnik/unilog "0.7.24"]
 ```
 
 ## Usage
@@ -347,6 +347,10 @@ You may need to add a multimethod for `start-appender!` if your appender needs a
 Full API documentation is available at http://pyr.github.io/unilog
 
 ## Releases
+
+### 0.7.24
+
+- Introduce mdc-fn and mdc-fn* which preserve MDC context across threads
 
 ### 0.7.22
 
