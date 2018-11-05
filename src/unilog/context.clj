@@ -1,5 +1,6 @@
 (ns unilog.context
-  "Provide a way to interact with Mapped Diagnostic Context")
+  "Provide a way to interact with Mapped Diagnostic Context"
+  (import org.slf4j.MDC))
 
 (defn push-context
   "Add a key to the current Mapped Diagnostic Context"
