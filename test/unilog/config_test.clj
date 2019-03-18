@@ -84,4 +84,23 @@
           (is (= #{1} (reduce conj #{} (map get-version records))))
           (is (= ["info" "warn" "error"] (map :message records)))
           (is (= ["INFO" "WARN" "ERROR"] (map :level records)))
-          (is (= #{":bar"} (reduce conj #{} (map :foo records)))))))))
+          (is (= #{":bar"} (reduce conj #{} (map :foo records))))))))
+
+  (testing "JSON logging to file with filter"
+    (let [path (temp-file "unilog.config" "log")]
+      (start-logging! {:level :info :appenders [{:appender :file
+                                                 :file (str path)
+                                                 :encoder :json
+                                                 :filters [[:foo #(= ":bar" %) :accept :deny]]}]})
+      (warn "warn")
+      (with-context {:foo :bar}
+        (info "info"))
+
+      (let [records (parse-lines path)]
+        (is (every? true? (map (comp check-interval get-timestamp) records)))
+        (is (= #{"unilog.config-test"} (reduce conj #{} (map :logger_name records))))
+        (is (= #{"main"} (reduce conj #{} (map :thread_name records))))
+        (is (= #{1} (reduce conj #{} (map get-version records))))
+        (is (= ["info"] (map :message records)))
+        (is (= ["INFO"] (map :level records)))
+        (is (= #{":bar"} (reduce conj #{} (map :foo records))))))))
