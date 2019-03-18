@@ -205,22 +205,6 @@
 ;; Open dispatch method to build appenders
 ;; =======================================
 
-(def result-mapping {:accept  FilterReply/ACCEPT
-                     :deny    FilterReply/DENY
-                     :neutral FilterReply/NEUTRAL})
-
-(defn make-log-property-filter
-  [field pred match no-match]
-  (let [match-enum    (result-mapping match)
-        no-match-enum (result-mapping no-match)]
-    (proxy [Filter] []
-      (decide [^ILoggingEvent event]
-        (let [mdc (.getMDCPropertyMap event)
-              v   (.get mdc (name field))]
-          (if (pred v)
-            match-enum
-            no-match-enum))))))
-
 (defmulti build-appender
   "Given a prepared configuration map, associate a prepared appender
   to the `:appender` key."
@@ -287,6 +271,24 @@
 (defmethod build-appender :default
   [val]
   (throw (ex-info "invalid log appender configuration" {:config val})))
+
+;;; build-filters
+;;; =======================================
+(def result-mapping {:accept  FilterReply/ACCEPT
+                     :deny    FilterReply/DENY
+                     :neutral FilterReply/NEUTRAL})
+
+(defn make-log-property-filter
+  [field pred match no-match]
+  (let [match-enum    (result-mapping match)
+        no-match-enum (result-mapping no-match)]
+    (proxy [Filter] []
+      (decide [^ILoggingEvent event]
+        (let [mdc (.getMDCPropertyMap event)
+              v   (.get mdc (name field))]
+          (if (pred v)
+            match-enum
+            no-match-enum))))))
 
 (defn build-filters
   [config]
