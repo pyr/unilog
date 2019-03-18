@@ -8,7 +8,7 @@
    standard facilities, such as [clojure.tools.logging](https://github.com/clojure/tools.logging).
 
    Two extension mechanism are provided to add support for more appenders and encoders,
-   see `build-appender*` and `build-encoder` respectively"
+   see `build-appender` and `build-encoder` respectively"
   (:import org.slf4j.LoggerFactory
            org.slf4j.bridge.SLF4JBridgeHandler
            ch.qos.logback.classic.net.SocketAppender
@@ -26,6 +26,7 @@
            ch.qos.logback.core.ConsoleAppender
            ch.qos.logback.core.FileAppender
            ch.qos.logback.core.OutputStreamAppender
+           ch.qos.logback.core.UnsynchronizedAppenderBase
            ch.qos.logback.core.rolling.TimeBasedRollingPolicy
            ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP
            ch.qos.logback.core.rolling.FixedWindowRollingPolicy
@@ -220,21 +221,21 @@
             match-enum
             no-match-enum))))))
 
-(defmulti build-appender*
+(defmulti build-appender
   "Given a prepared configuration map, associate a prepared appender
   to the `:appender` key."
   :appender)
 
-(defmethod build-appender* :console
+(defmethod build-appender :console
   [config]
   (assoc config :appender (ConsoleAppender.)))
 
-(defmethod build-appender* :file
+(defmethod build-appender :file
   [{:keys [file] :as config}]
   (assoc config :appender (doto (FileAppender.)
                             (.setFile file))))
 
-(defmethod build-appender* :socket
+(defmethod build-appender :socket
   [{:keys [remote-host port queue-size reconnection-delay event-delay-limit]
     :or {remote-host "localhost"
          port        2004
@@ -253,13 +254,13 @@
       (.setEventDelayLimit appender (Duration/valueOf event-delay-limit)))
     (assoc config :appender appender)))
 
-(defmethod build-appender* :syslog
+(defmethod build-appender :syslog
   [{:keys [host port] :or {host "localhost" port 514} :as config}]
   (assoc config :appender (doto (OutputStreamAppender.)
                             (.setOutputStream
                              (SyslogOutputStream. host (int port))))))
 
-(defmethod build-appender* :rolling-file
+(defmethod build-appender :rolling-file
   [{:keys [rolling-policy triggering-policy file]
     :or {rolling-policy    :fixed-window
          triggering-policy :size-based}
@@ -283,18 +284,18 @@
     (.setRollingPolicy appender (build-rolling-policy rolling-policy))
     (assoc config :appender appender)))
 
-(defmethod build-appender* :default
+(defmethod build-appender :default
   [val]
   (throw (ex-info "invalid log appender configuration" {:config val})))
 
-(defn build-appender
+(defn build-filters
   [config]
-  (let [{:keys [^Appender appender filters] :as new-config} (build-appender* config)]
-    (doseq [[field pred match no-match] filters]
-      (let [^Filter f (make-log-property-filter field pred match no-match)]
-        (.start f)
-        (.addFilter appender f)))
-    new-config))
+  (let [{:keys [^Appender appender filters]} config]
+    (when (instance? UnsynchronizedAppenderBase appender)
+      (doseq [[field pred match no-match] filters]
+        (let [^Filter f (make-log-property-filter field pred match no-match)]
+          (.addFilter appender f))))
+    config))
 
 ;;; start-appender!
 ;;; =======================================
@@ -319,11 +320,16 @@
       (when (instance? ContextAware tp)
         (.setContext ^ContextAware tp context))
       (.start tp)))
+  (doseq [^Filter f (.getCopyOfAttachedFiltersList appender)]
+    (.start f))
   (.start appender))
 
 (defmethod start-appender! :default
   [appender context]
   (.setContext ^ContextAware appender ^LoggerContext context)
+  (when (instance? UnsynchronizedAppenderBase appender)
+    (doseq [^Filter f (.getCopyOfAttachedFiltersList ^UnsynchronizedAppenderBase appender)]
+      (.start f)))
   (.start ^LifeCycle appender)
   appender)
 
@@ -379,6 +385,7 @@ example:
                             (flatten)
                             (remove nil?)
                             (map build-appender)
+                            (map build-filters)
                             (map build-encoder))]
 
          (.detachAndStopAllAppenders root)
