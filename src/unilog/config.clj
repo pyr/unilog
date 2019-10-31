@@ -133,7 +133,7 @@
 
 (defmethod build-encoder :json
   [config]
-  (assoc config :encoder (LogstashEncoder.)))
+  (assoc config :encoder (doto (LogstashEncoder.) (.setIncludeMdc true))))
 
 (defmethod build-encoder :default
   [{:keys [appender] :as config}]
@@ -325,16 +325,16 @@
 
    When called with no arguments, assume an empty map
 
-example:
+  example:
 
-```clojure
-{:console   true
- :level     \"info\"
- :files     [\"/var/log/app.log\"
+  ```clojure
+  {:console   true
+  :level     \"info\"
+  :files     [\"/var/log/app.log\"
              {:file \"/var/log/app-json.log\"
               :encoder json}]
- :overrides {\"some.namespace\" \"debug\"}}
-```
+  :overrides {\"some.namespace\" \"debug\"}}
+  ```
   "
   ([raw-config]
    (let [config (merge default-configuration raw-config)

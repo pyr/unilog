@@ -1,4 +1,4 @@
-(defproject spootnik/unilog "0.7.24"
+(defproject spootnik/unilog "0.7.25"
   :description "logging should be easy!"
   :url "https://github.com/pyr/unilog"
   :license {:name "MIT License"
@@ -14,6 +14,7 @@
                  [org.slf4j/jul-to-slf4j                        "1.7.25"]
                  [ch.qos.logback/logback-classic                "1.2.3"]
                  [ch.qos.logback/logback-core                   "1.2.3"]]
+  :deploy-repositories [["releases" :clojars] ["snapshots" :clojars]]
   :profiles {:dev {:dependencies [[org.clojure/tools.logging "0.4.0"]
                                   [cheshire                  "5.8.0"]
                                   [clj-time                  "0.14.2"]]
