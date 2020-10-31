@@ -1,7 +1,9 @@
 # unilog: logging should be easy!
 
 
-[![cljdocbadge](https://cljdoc.xyz/badge/pyr/unilog)](https://cljdoc.org/d/exoscale/unilog/CURRENT/api/pyr.unilog)
+
+
+[![cljdoc badge](https://cljdoc.org/badge/pyr/unilog)](https://cljdoc.org/d/pyr/unilog/CURRENT)
 
 [clojure.tools.logging](https://github.com/clojure/tools.logging) is
 a great library to perform logging. It walks through several available
