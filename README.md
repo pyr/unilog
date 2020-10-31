@@ -26,10 +26,6 @@ Unilog provides a simple and somewhat opiniated way of configuring
 
 [![Clojars Project](https://img.shields.io/clojars/v/spootnik/unilog)](https://clojars.org/spootnik/unilog)
 
-```clojure
-[spootnik/unilog "0.7.24"]
-```
-
 ## Usage
 
 Let's pretend you have an application, which reads its initial
