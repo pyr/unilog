@@ -24,7 +24,7 @@ Unilog provides a simple and somewhat opiniated way of configuring
 
 ## Coordinates
 
-[![Clojars Project](https://img.shields.io/clojars/v/pyr/unilog)](https://clojars.org/pyr/unilog)
+[![Clojars Project](https://img.shields.io/clojars/v/spootnik/unilog)](https://clojars.org/spootnik/unilog)
 
 ```clojure
 [spootnik/unilog "0.7.24"]
