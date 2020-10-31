@@ -3,7 +3,7 @@
 
 
 
-[![cljdoc badge](https://cljdoc.org/badge/spootnik/unilog)](https://cljdoc.org/d/spootnik/unilog/CURRENT)
+[![cljdoc badge](https://cljdoc.xyz/badge/spootnik/unilog)](https://cljdoc.org/d/spootnik/unilog/CURRENT)
 
 [clojure.tools.logging](https://github.com/clojure/tools.logging) is
 a great library to perform logging. It walks through several available
@@ -13,14 +13,15 @@ options such as [slf4j](http://www.slf4j.org),
 and [logback](http://logback.qos.ch).
 
 While the logging itself is simple and straightforward, navigating the
-many ways to configure logging can be a bit daunting since the above
-logging frameworks which
+many ways to configure logging can be a bit daunting. The above logging
+frameworks which
 [clojure.tools.logging](https://github.com/clojure/tools.logging)
-allow external configuration.
+relies on expect logging configuration to happen in separate configuration file.
 
-Unilog provides a simple and somewhat opiniated way of configuring
-[logback](http://logback.qos.ch/) through simple clojure maps.
+Unilog provides an extendable data format for configuration the
+[logback](http://logback.qos.ch/) framework.
 
+Unilog also provides facilities to attach metadata to logs.
 
 ## Coordinates
 
