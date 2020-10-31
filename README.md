@@ -3,7 +3,7 @@
 
 
 
-[![cljdoc badge](https://cljdoc.org/badge/pyr/unilog)](https://cljdoc.org/d/pyr/unilog/CURRENT)
+[![cljdoc badge](https://cljdoc.org/badge/spootnik/unilog)](https://cljdoc.org/d/spootnik/unilog/CURRENT)
 
 [clojure.tools.logging](https://github.com/clojure/tools.logging) is
 a great library to perform logging. It walks through several available
@@ -347,6 +347,11 @@ You may need to add a multimethod for `start-appender!` if your appender needs a
 Full API documentation is available at http://pyr.github.io/unilog
 
 ## Releases
+
+### 0.7.26
+
+- Dependency upgrades
+- Unilog now depends on Clojure 1.10.1
 
 ### 0.7.24
 
