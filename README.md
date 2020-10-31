@@ -1,7 +1,7 @@
 # unilog: logging should be easy!
 
-[![Build Status](https://secure.travis-ci.org/pyr/unilog.png)](http://travis-ci.org/pyr/unilog)
 
+[![cljdocbadge](https://cljdoc.xyz/badge/pyr/unilog)](https://cljdoc.org/d/exoscale/unilog/CURRENT/api/pyr.unilog)
 
 [clojure.tools.logging](https://github.com/clojure/tools.logging) is
 a great library to perform logging. It walks through several available
@@ -375,7 +375,7 @@ Full API documentation is available at http://pyr.github.io/unilog
 
 - Coda Hale (https://github.com/codahale) updated dependencies.
 
-### 0.7.15 
+### 0.7.15
 
 - Coda Hale (https://github.com/codahale) added a `java.util.logging` bridge for applications relying on this logging method.
 
