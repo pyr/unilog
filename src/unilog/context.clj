@@ -48,7 +48,6 @@
 (comment
 
   ;; Example usage, you'll need a pattern that shows MDC values
-
   (require '[clojure.tools.logging :refer [info]])
 
   (let [f (mdc-fn [] (with-context {:mdcval "bar"} (info "something")))]

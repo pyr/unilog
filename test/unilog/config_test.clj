@@ -1,12 +1,11 @@
 (ns unilog.config-test
-  (:require [unilog.config         :refer :all]
-            [clojure.test          :refer :all]
+  (:require [unilog.config         :refer [start-logging!]]
+            [clojure.test          :refer [deftest is testing]]
+            [clojure.instant       :as instant]
             [unilog.context        :refer [with-context]]
-            [cheshire.core         :refer [parse-string]]
-            [clojure.java.io       :refer [reader]]
-            [clojure.tools.logging :refer [debug info warn error]]
-            [clj-time.format       :refer [parse formatters]]
-            [clj-time.core         :refer [interval now within? minus seconds]]))
+            [jsonista.core         :as j]
+            [clojure.java.io       :as io]
+            [clojure.tools.logging :refer [debug info warn error]]))
 
 (defn- temp-file
   "Temp file which gets deleted when the JVM stops"
@@ -17,15 +16,21 @@
 (defn- parse-lines
   "Returns a seq of JSON records parsed from a file, line by line."
   [path]
-  (for [line (line-seq (reader path))]
-    (parse-string line true)))
+  (for [line (line-seq (io/reader path))]
+    (j/read-value line j/keyword-keys-object-mapper)))
+
+(defn- minus-seconds
+  [^java.util.Date d ^Long seconds]
+  (java.util.Date/from
+   ^java.time.Instant
+   (-> d .toInstant (.minusSeconds ^Long seconds))))
 
 (defn- check-interval
   [date-str]
-  (let [dt (parse date-str)
-        floor (minus (now) (seconds 5))
-        correct-band (interval floor (now))]
-    (within? correct-band dt)))
+  (let [dt ^java.util.Date (instant/read-instant-date date-str)
+        ceiling ^java.util.Date (java.util.Date.)
+        floor   ^java.util.Date (minus-seconds ceiling 5)]
+    (and (.after dt floor) (.before dt ceiling))))
 
 (def ^:private get-version (keyword "@version"))
 (def ^:private get-timestamp (keyword "@timestamp"))
@@ -40,7 +45,8 @@
     (is (nil? (error "error"))))
 
   (testing "JSON logging to console"
-    (start-logging! {:level :info :appenders [{:appender :console :encoder :json}]})
+    (start-logging! {:level     :info
+                     :appenders [{:appender :console :encoder :json}]})
     (is (nil? (debug "debug")))
     (is (nil? (info "info")))
     (is (nil? (warn "warn")))
@@ -49,8 +55,8 @@
   (testing "JSON logging to file"
     (let [path (temp-file "unilog.config" "log")]
       (start-logging! {:level :info :appenders [{:appender :file
-                                                 :file (str path)
-                                                 :encoder :json}]})
+                                                 :file     (str path)
+                                                 :encoder  :json}]})
       (debug "debug")
       (info "info")
       (warn "warn")
@@ -60,7 +66,7 @@
         (is (every? true? (map (comp check-interval get-timestamp) records)))
         (is (= #{"unilog.config-test"} (reduce conj #{} (map :logger_name records))))
         (is (= #{"main"} (reduce conj #{} (map :thread_name records))))
-        (is (= #{1} (reduce conj #{} (map get-version records))))
+        (is (= #{"1"} (reduce conj #{} (map get-version records))))
         (is (= ["info" "warn" "error"] (map :message records)))
         (is (= ["INFO" "WARN" "ERROR"] (map :level records)))
         )))
@@ -68,8 +74,8 @@
   (testing "JSON logging to file with MDC"
     (let [path (temp-file "unilog.config" "log")]
       (start-logging! {:level :info :appenders [{:appender :file
-                                                 :file (str path)
-                                                 :encoder :json}]})
+                                                 :file     (str path)
+                                                 :encoder  :json}]})
       (with-context {:foo :bar}
 
         (debug "debug")
@@ -81,7 +87,7 @@
           (is (every? true? (map (comp check-interval get-timestamp) records)))
           (is (= #{"unilog.config-test"} (reduce conj #{} (map :logger_name records))))
           (is (= #{"main"} (reduce conj #{} (map :thread_name records))))
-          (is (= #{1} (reduce conj #{} (map get-version records))))
+          (is (= #{"1"} (reduce conj #{} (map get-version records))))
           (is (= ["info" "warn" "error"] (map :message records)))
           (is (= ["INFO" "WARN" "ERROR"] (map :level records)))
           (is (= #{":bar"} (reduce conj #{} (map :foo records)))))))))

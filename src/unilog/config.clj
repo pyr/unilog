@@ -371,3 +371,15 @@
          root))))
   ([]
    (start-logging! default-configuration)))
+
+(comment
+
+  (start-logging! (assoc default-configuration :console "%p [%d] %t ->>> %X{bim} %c - %m%n"))
+
+  (require '[clojure.tools.logging :as log])
+  (require '[unilog.context :refer [with-context]])
+
+  (with-context {"bim" "bam"}
+    (log/info "hello"))
+
+  )

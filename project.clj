@@ -3,19 +3,18 @@
   :url "https://github.com/pyr/unilog"
   :license {:name "MIT License"
             :url "https://github.com/pyr/unilog/tree/master/LICENSE"}
-  :plugins [[lein-codox "0.10.3"]
-            [lein-ancient "0.6.15"]]
-  :codox {:source-uri "https://github.com/pyr/unilog/blob/{version}/{filepath}#L{line}"
-          :metadata   {:doc/format :markdown}}
-  :dependencies [[org.clojure/clojure                           "1.9.0"]
-                 [net.logstash.logback/logstash-logback-encoder "4.11"]
-                 [org.slf4j/slf4j-api                           "1.7.25"]
-                 [org.slf4j/log4j-over-slf4j                    "1.7.25"]
-                 [org.slf4j/jul-to-slf4j                        "1.7.25"]
+  :plugins [[lein-ancient "0.6.15"]
+            [lein-cljfmt "0.6.7"]]
+  :pedantic? :abort
+  :dependencies [[org.clojure/clojure                           "1.10.1"]
+                 [net.logstash.logback/logstash-logback-encoder "6.4"]
+                 [org.slf4j/slf4j-api                           "1.7.30"]
+                 [org.slf4j/log4j-over-slf4j                    "1.7.30"]
+                 [org.slf4j/jul-to-slf4j                        "1.7.30"]
                  [ch.qos.logback/logback-classic                "1.2.3"]
                  [ch.qos.logback/logback-core                   "1.2.3"]]
   :deploy-repositories [["releases" :clojars] ["snapshots" :clojars]]
-  :profiles {:dev {:dependencies [[org.clojure/tools.logging "0.4.0"]
-                                  [cheshire                  "5.8.0"]
-                                  [clj-time                  "0.14.2"]]
+  :profiles {:dev {:dependencies [[org.clojure/tools.logging "1.1.0"]
+                                  [metosin/jsonista          "0.2.7"
+                                   :exclusions [com.fasterxml.jackson.core/*]]]
                    :global-vars {*warn-on-reflection* true}}})
