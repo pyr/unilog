@@ -68,8 +68,7 @@
         (is (= #{"main"} (reduce conj #{} (map :thread_name records))))
         (is (= #{"1"} (reduce conj #{} (map get-version records))))
         (is (= ["info" "warn" "error"] (map :message records)))
-        (is (= ["INFO" "WARN" "ERROR"] (map :level records)))
-        )))
+        (is (= ["INFO" "WARN" "ERROR"] (map :level records))))))
 
   (testing "JSON logging to file with MDC"
     (let [path (temp-file "unilog.config" "log")]

@@ -70,6 +70,7 @@
 ;; Open dispatch method to build appender configuration
 ;; ====================================================
 
+
 (defmulti appender-config
   "Called by walking through each key/val pair in the main configuration
    map. This allows for early transformation of quick access keys such as:
@@ -190,7 +191,6 @@
 (defmulti build-triggering-policy
   "Given a configuration map, build a TriggeringPolicy instance."
   :type)
-
 
 (defmethod build-triggering-policy :size-based
   [{:keys [max-size]
@@ -380,6 +380,4 @@
   (require '[unilog.context :refer [with-context]])
 
   (with-context {"bim" "bam"}
-    (log/info "hello"))
-
-  )
+    (log/info "hello")))

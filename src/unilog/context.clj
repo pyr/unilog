@@ -18,7 +18,7 @@
   `(if-not (map? ~ctx)
      (throw (ex-info "with-context expects a map" {}))
      (try
-       (doseq [[k# v#] ~ctx ]
+       (doseq [[k# v#] ~ctx]
          (push-context k# v#))
        ~@body
        (finally
