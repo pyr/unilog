@@ -11,19 +11,25 @@
   [k]
   (org.slf4j.MDC/remove (name k)))
 
+
+(defn set-context 
+  "Sets the current Mapped Diagnostic Context"
+  [ctx]
+  (org.slf4j.MDC/setContextMap ctx))
+
 (defmacro with-context
   "Execute body with the Mapped Diagnostic Context updated from
    keys found in the ctx map."
   [ctx & body]
   `(if-not (map? ~ctx)
      (throw (ex-info "with-context expects a map" {}))
-     (try
-       (doseq [[k# v#] ~ctx]
-         (push-context k# v#))
-       ~@body
-       (finally
-         (doseq [[k# _#] ~ctx]
-           (pull-context k#))))))
+     (let [copy# (org.slf4j.MDC/getCopyOfContextMap)]
+       (try
+         (doseq [[k# v#] ~ctx]
+           (push-context k# v#))
+         ~@body
+         (finally
+           (set-context (or copy# {})))))))
 
 (defn mdc-fn*
   "Returns a function, which will install the same MDC context map in effect as in
