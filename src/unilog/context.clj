@@ -11,8 +11,7 @@
   [k]
   (org.slf4j.MDC/remove (name k)))
 
-
-(defn set-context 
+(defn set-context
   "Sets the current Mapped Diagnostic Context"
   [ctx]
   (org.slf4j.MDC/setContextMap ctx))

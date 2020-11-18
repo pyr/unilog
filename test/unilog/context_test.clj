@@ -9,5 +9,5 @@
       (with-context {:a 2}
         (is (= "2" (get (org.slf4j.MDC/getCopyOfContextMap) "a"))))
       (is (= "1" (get (org.slf4j.MDC/getCopyOfContextMap) "a"))))))
-  
-  
+
+
