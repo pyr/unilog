@@ -349,9 +349,11 @@ Full API documentation is available at http://pyr.github.io/unilog
 
 ## Releases
 
-## 0.7.28
+### 0.7.28
 
 - Arnaud Geiser (https://github.com/arnaudgeiser) added support for the commons-logging bridge
+- Dependency upgrades
+- Unilog now depends on Clojure 1.10.3
 
 ### 0.7.26
 
