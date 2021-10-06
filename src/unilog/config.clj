@@ -66,10 +66,8 @@
    :files  []
    :level  "info"})
 
-
 ;; Open dispatch method to build appender configuration
 ;; ====================================================
-
 
 (defmulti appender-config
   "Called by walking through each key/val pair in the main configuration
