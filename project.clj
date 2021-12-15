@@ -1,5 +1,5 @@
 (def slf4j-version "1.7.32")
-(def logback-version "1.2.6")
+(def logback-version "1.2.8")
 
 (defproject spootnik/unilog "0.7.29-SNAPSHOT"
   :description "logging should be easy!"
