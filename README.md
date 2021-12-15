@@ -349,6 +349,10 @@ Full API documentation is available at http://pyr.github.io/unilog
 
 ## Releases
 
+### 0.7.29
+
+- Iizuka Masashi (https://github.com/liquidz) bumped dependencies
+
 ### 0.7.28
 
 - Arnaud Geiser (https://github.com/arnaudgeiser) added support for the commons-logging bridge
