@@ -9,13 +9,13 @@
 
    Two extension mechanism are provided to add support for more appenders and encoders,
    see `build-appender` and `build-encoder` respectively"
+  (:require [unilog.encoders :as encoders])
   (:import org.slf4j.LoggerFactory
            org.slf4j.bridge.SLF4JBridgeHandler
            ch.qos.logback.classic.net.SocketAppender
            ch.qos.logback.classic.encoder.PatternLayoutEncoder
            ch.qos.logback.classic.Logger
            ch.qos.logback.classic.LoggerContext
-           ch.qos.logback.classic.BasicConfigurator
            ch.qos.logback.classic.Level
            ch.qos.logback.core.spi.ContextAware
            ch.qos.logback.core.rolling.TriggeringPolicy
@@ -132,6 +132,11 @@
                   (.setPattern (or pattern default-pattern)))]
     (assoc config :encoder encoder)))
 
+(defmethod build-encoder :multipattern
+  [{:keys [multipattern] :as config}]
+  (let [encoder (encoders/make-multilayout-encoder default-pattern multipattern)]
+    (assoc config :encoder encoder)))
+
 (defmethod build-encoder :json
   [config]
   (assoc config :encoder (doto (LogstashEncoder.) (.setIncludeMdc true))))
@@ -139,9 +144,9 @@
 (defmethod build-encoder :default
   [{:keys [appender] :as config}]
   (cond-> config
-    (instance? OutputStreamAppender appender)
-    (assoc :encoder (doto (PatternLayoutEncoder.)
-                      (.setPattern default-pattern)))))
+          (instance? OutputStreamAppender appender)
+          (assoc :encoder (doto (PatternLayoutEncoder.)
+                            (.setPattern default-pattern)))))
 
 ;;
 ;; Open dispatch to build a file rolling policy
