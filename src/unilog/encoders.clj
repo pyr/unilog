@@ -16,30 +16,30 @@
                   (.setOutputPatternAsHeader output-pattern-as-header))]
     (->LoggerEncoder logger pattern encoder)))
 
-(defn- make-comparator
+(defn- counteq-prefixes [[v1 & vrest1] [v2 & vrest2]]
+  (if (or (nil? v1)
+          (nil? v2)
+          (not= v1 v2))
+    0
+    (+ 1 (counteq-prefixes vrest1 vrest2))))
+
+
+(defn- find-best-layout
   "Makes a `LoggerEncoder` comparator that puts the best match for a given `logger-name` first.
   Uses the `logger` field to compare against `logger-name`."
-  [^String logger-name]
-  (reify Comparator
-    (compare [this encoder1 encoder2]
-      ;; remove the dots
-      ;; compare longest prefix
-      ;; return best match
-      (let [logger   (.replaceAll logger-name "\\." "")
-            e1logger (.replaceAll ^String (-> encoder1 :logger name) "\\." "")
-            e2logger (.replaceAll ^String (-> encoder2 :logger name) "\\." "")
-            o2match  (.length (StringUtils/getCommonPrefix (into-array String [e2logger logger])))
-            o1match  (.length (StringUtils/getCommonPrefix (into-array String [e1logger logger])))
-            ;; match is hierarchical, so we want the shortest one
-            ;; if some encoders have the same prefix (eg: logger-name is 'com.exoscale'
-            ;; and we have 'com.exoscale.blah' and 'com.exoscale.blah.c' we want the shortest one
-            o2Rem    (- (.length e2logger) o2match)
-            o1Rem    (- (.length e1logger) o1match)
-            diff     (- o2match o1match)]
-
-        (if (zero? diff)
-          (- o1Rem o2Rem)
-          diff)))))
+  [^String logger-name encoders]
+  (let [parts (vec (.split logger-name "[.]"))]
+    (->> encoders
+         (map (fn [enc]
+                (let [eparts (vec (.split ^String (name (:logger enc)) "[.]"))
+                      common (counteq-prefixes parts eparts)
+                      ;; ensure that  eg: "amazon" does not match an encoder "amazonaws"
+                      match? (= (count eparts) common)]
+                  [enc (if match? common 0)])))
+         (filter (fn [[_ score]] (pos-int? score)))
+         (sort-by second)
+         (reverse)
+         (ffirst))))
 
 (defn- closest-match
   "Find the closest encoder for the give `logger-name` and coll of `encoder`s.
@@ -48,10 +48,11 @@
   (if (or (.equalsIgnoreCase Logger/ROOT_LOGGER_NAME logger-name)
           (empty? encoders))
     root-layout
-    (let [encoder (->> encoders
-                       (sort (make-comparator logger-name))
-                       (first))]
-      (.getLayout ^PatternLayoutEncoder (:encoder encoder)))))
+    (let [encoder (find-best-layout logger-name encoders)]
+      (def encoders encoders)
+      (if (some? encoder)
+          (.getLayout ^PatternLayoutEncoder (:encoder encoder))
+          root-layout))))
 
 (defn make-multilayout-encoder
   "Create a custom PatternLayoutEncoder that can support multiple layouts per logger.
