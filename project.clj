@@ -1,8 +1,8 @@
 (def slf4j-version "2.0.3")
-(def logback-version "1.4.4")
+(def logback-version "1.4.12")
 (def jackson-version "2.14.0-rc2")
 
-(defproject spootnik/unilog "0.7.32-SNAPSHOT"
+(defproject spootnik/unilog "0.7.33-SNAPSHOT"
   :description "logging should be easy!"
   :url "https://github.com/pyr/unilog"
   :license {:name "MIT License"
