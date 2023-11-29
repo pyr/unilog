@@ -1,4 +1,4 @@
-(def slf4j-version "2.0.3")
+(def slf4j-version "2.0.7")
 (def logback-version "1.4.12")
 (def jackson-version "2.14.0-rc2")
 
