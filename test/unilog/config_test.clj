@@ -25,11 +25,18 @@
    ^java.time.Instant
    (-> d .toInstant (.minusSeconds ^Long seconds))))
 
+(defn- plus-seconds
+  [^java.util.Date d ^Long seconds]
+  (java.util.Date/from
+   ^java.time.Instant
+   (-> d .toInstant (.plusSeconds ^Long seconds))))
+
 (defn- check-interval
   [date-str]
   (let [dt ^java.util.Date (instant/read-instant-date date-str)
-        ceiling ^java.util.Date (java.util.Date.)
-        floor   ^java.util.Date (minus-seconds ceiling 5)]
+        ts (java.util.Date.)
+        ceiling ^java.util.Date (plus-seconds ts 5)
+        floor   ^java.util.Date (minus-seconds ts 5)]
     (and (.after dt floor) (.before dt ceiling))))
 
 (def ^:private get-version (keyword "@version"))
