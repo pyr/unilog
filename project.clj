@@ -2,7 +2,7 @@
 (def logback-version "1.5.0")
 (def jackson-version "2.16.1")
 
-(defproject spootnik/unilog "0.7.32"
+(defproject spootnik/unilog "0.7.33-SNAPSHOT"
   :description "logging should be easy!"
   :url "https://github.com/pyr/unilog"
   :license {:name "MIT License"
