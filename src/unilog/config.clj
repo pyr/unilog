@@ -26,6 +26,7 @@
            ch.qos.logback.core.ConsoleAppender
            ch.qos.logback.core.FileAppender
            ch.qos.logback.core.OutputStreamAppender
+           ch.qos.logback.core.UnsynchronizedAppenderBase
            ch.qos.logback.core.rolling.TimeBasedRollingPolicy
            ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP
            ch.qos.logback.core.rolling.FixedWindowRollingPolicy
@@ -34,7 +35,10 @@
            ch.qos.logback.core.util.Duration
            ch.qos.logback.core.util.FileSize
            ch.qos.logback.core.net.SyslogOutputStream
-           net.logstash.logback.encoder.LogstashEncoder))
+           net.logstash.logback.encoder.LogstashEncoder
+           ch.qos.logback.classic.spi.ILoggingEvent
+           ch.qos.logback.core.filter.Filter
+           ch.qos.logback.core.spi.FilterReply))
 
 ;; Configuration constants
 ;; =======================
@@ -266,6 +270,33 @@
   [val]
   (throw (ex-info "invalid log appender configuration" {:config val})))
 
+;;; build-filters
+;;; =======================================
+(def result-mapping {:accept  FilterReply/ACCEPT
+                     :deny    FilterReply/DENY
+                     :neutral FilterReply/NEUTRAL})
+
+(defn make-log-property-filter
+  [field pred match no-match]
+  (let [match-enum    (result-mapping match)
+        no-match-enum (result-mapping no-match)]
+    (proxy [Filter] []
+      (decide [^ILoggingEvent event]
+        (let [mdc (.getMDCPropertyMap event)
+              v   (.get mdc (name field))]
+          (if (pred v)
+            match-enum
+            no-match-enum))))))
+
+(defn build-filters
+  [config]
+  (let [{:keys [^Appender appender filters]} config]
+    (when (instance? UnsynchronizedAppenderBase appender)
+      (doseq [[field pred match no-match] filters]
+        (let [^Filter f (make-log-property-filter field pred match no-match)]
+          (.addFilter appender f))))
+    config))
+
 ;;; start-appender!
 ;;; =======================================
 (defmulti start-appender!
@@ -289,11 +320,16 @@
       (when (instance? ContextAware tp)
         (.setContext ^ContextAware tp context))
       (.start tp)))
+  (doseq [^Filter f (.getCopyOfAttachedFiltersList appender)]
+    (.start f))
   (.start appender))
 
 (defmethod start-appender! :default
   [appender context]
   (.setContext ^ContextAware appender ^LoggerContext context)
+  (when (instance? UnsynchronizedAppenderBase appender)
+    (doseq [^Filter f (.getCopyOfAttachedFiltersList ^UnsynchronizedAppenderBase appender)]
+      (.start f)))
   (.start ^LifeCycle appender)
   appender)
 
@@ -349,6 +385,7 @@
                             (flatten)
                             (remove nil?)
                             (map build-appender)
+                            (map build-filters)
                             (map build-encoder))]
 
          (.detachAndStopAllAppenders root)
