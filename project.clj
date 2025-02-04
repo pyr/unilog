@@ -1,5 +1,5 @@
 (def slf4j-version "2.0.12")
-(def logback-version "1.5.0")
+(def logback-version "1.5.6")
 (def jackson-version "2.16.1")
 
 (defproject spootnik/unilog "0.7.33-SNAPSHOT"
