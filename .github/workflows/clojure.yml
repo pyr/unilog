@@ -9,4 +9,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run tests
-      run: lein with-profile test do cljfmt check, test
+      uses: oxr463/setup-leiningen@0.0.1
+      with:
+        exec: lein with-profile test do cljfmt check, test
