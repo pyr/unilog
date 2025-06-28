@@ -3,7 +3,7 @@
 
 
 
-[![cljdoc badge](https://cljdoc.xyz/badge/spootnik/unilog)](https://cljdoc.org/d/spootnik/unilog/CURRENT)
+[![cljdoc badge](https://cljdoc.org/badge/spootnik/unilog)](https://cljdoc.org/d/spootnik/unilog/CURRENT)
 
 [clojure.tools.logging](https://github.com/clojure/tools.logging) is
 a great library to perform logging. It walks through several available
